@@ -1,15 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { supabase } from '../../config/supabase';
+import { useCenters } from '../../hooks/useCenters';
+import '../../utils/leafletIcons';
 import '../../styles/shared/sentinel.css';
-
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
 const BULACAN_CENTER = [14.7942, 120.8793];
 
@@ -42,31 +37,17 @@ function FlyTo({ position }) {
 }
 
 function CentersPage({ onSelectCenter }) {
-	const [centers, setCenters] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
+	const { centers, loading, error } = useCenters();
 	const [highlighted, setHighlighted] = useState(null);
 	const [flyTo, setFlyTo] = useState(null);
 	const cardRefs = useRef({});
+	const [statusFilter, setStatusFilter] = useState('all');
 
 	// "Near me" filter state
 	const [nearMode, setNearMode] = useState(false);
 	const [userCoords, setUserCoords] = useState(null);
 	const [gpsStatus, setGpsStatus] = useState('idle'); // idle | locating | error
 	const [gpsError, setGpsError] = useState('');
-
-	useEffect(() => {
-		async function fetchCenters() {
-			const { data, error: err } = await supabase
-				.from('evacuation_centers')
-				.select('*')
-				.order('municipality', { ascending: true });
-			if (err) setError(err.message);
-			else setCenters(data || []);
-			setLoading(false);
-		}
-		fetchCenters();
-	}, []);
 
 	const occupancyPercent = (center) => {
 		if (!center.capacity) return 0;

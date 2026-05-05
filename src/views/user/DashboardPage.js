@@ -1,43 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../config/supabase';
+import { useAuth } from '../../context/AuthContext';
+import { useAlerts } from '../../hooks/useAlerts';
 import '../../styles/shared/sentinel.css';
 import WeatherWidget from '../../components/WeatherWidget';
 
-function DashboardPage({ user, onNavigate }) {
-	const [stats, setStats]     = useState({ alerts: '—', centers: '—', routes: '—' });
-	const [recentAlerts, setRecentAlerts] = useState([]);
-	const [topAlert, setTopAlert]         = useState(null);
-	const [syncedAt, setSyncedAt]         = useState('');
-	const [loading, setLoading]           = useState(true);
+function DashboardPage() {
+	const { currentUser: user, setPage: onNavigate } = useAuth();
+	const { alerts: recentAlertsAll, loading: alertsLoading } = useAlerts();
+	const [stats, setStats] = useState({ centers: '—', routes: '—' });
+	const [syncedAt, setSyncedAt] = useState('');
+	const [statsLoading, setStatsLoading] = useState(true);
+
+	const recentAlerts = recentAlertsAll.slice(0, 5);
+	const topAlert = recentAlerts.find((a) => a.level === 'high') || recentAlerts[0] || null;
+	const loading = alertsLoading || statsLoading;
 
 	useEffect(() => {
-		async function loadData() {
-			const [alertsRes, centersRes, routesRes, recentRes] = await Promise.all([
-				supabase.from('alerts').select('id', { count: 'exact', head: true }),
+		if (!alertsLoading) setSyncedAt(new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }));
+	}, [alertsLoading]);
+
+	useEffect(() => {
+		async function loadStats() {
+			const [centersRes, routesRes] = await Promise.all([
 				supabase.from('evacuation_centers').select('id', { count: 'exact', head: true }).eq('status', 'open'),
 				supabase.from('evacuation_routes').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-				supabase.from('alerts').select('id, title, level, created_at').order('created_at', { ascending: false }).limit(5)
 			]);
-
-			setStats({
-				alerts:  alertsRes.count  ?? 0,
-				centers: centersRes.count ?? 0,
-				routes:  routesRes.count  ?? 0,
-			});
-
-			const items = recentRes.data || [];
-			setRecentAlerts(items);
-			setTopAlert(items.find((a) => a.level === 'high') || items[0] || null);
-			setSyncedAt(new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }));
-			setLoading(false);
+			setStats({ centers: centersRes.count ?? 0, routes: routesRes.count ?? 0 });
+			setStatsLoading(false);
 		}
-		loadData();
+		loadStats();
 	}, []);
 
 	const metricCards = [
-		{ label: 'Active Alerts',   icon: '🚨', value: stats.alerts,  tone: 'danger'  },
-		{ label: 'Open Centers',    icon: '🏠', value: stats.centers, tone: 'primary' },
-		{ label: 'Active Routes',   icon: '🛣️', value: stats.routes,  tone: 'success' },
+		{ label: 'Active Alerts',   icon: '🚨', value: recentAlertsAll.length, tone: 'danger'  },
+		{ label: 'Open Centers',    icon: '🏠', value: stats.centers,          tone: 'primary' },
+		{ label: 'Active Routes',   icon: '🛣️', value: stats.routes,            tone: 'success' },
 	];
 
 	return (

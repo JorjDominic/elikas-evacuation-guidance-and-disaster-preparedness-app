@@ -1,7 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import '../styles/shared/sentinel.css';
 
 function SignUpPage() {
+	const { handleRegister, setPage } = useAuth();
+	const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState('');
+	const [success, setSuccess] = useState('');
+
+	const handleChange = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		setError('');
+		setLoading(true);
+		const result = await handleRegister(form);
+		setLoading(false);
+		if (!result.success) { setError(result.message); return; }
+		if (result.confirmEmail) {
+			setSuccess('Account created! Check your email to confirm your address before logging in.');
+		}
+		// If session is immediate, SIGNED_IN event in AuthContext handles redirect
+	};
+
 	return (
 		<section className="view-auth">
 			<div className="auth-shell">
@@ -19,21 +41,34 @@ function SignUpPage() {
 					</ul>
 				</div>
 
-				<form className="auth-card auth-form">
+				<form className="auth-card auth-form" onSubmit={handleSubmit}>
 					<h2>Create Account</h2>
-					<label>Full Name</label>
-					<input type="text" placeholder="Juan Dela Cruz" />
+					{error   && <div className="sb-auth-error">{error}</div>}
+					{success && <div className="sb-auth-message">{success}</div>}
 
-					<label>Email</label>
-					<input type="email" placeholder="juan@email.com" />
+					<label htmlFor="su-name">Full Name</label>
+					<input id="su-name" type="text" placeholder="Juan Dela Cruz"
+						value={form.name} onChange={(e) => handleChange('name', e.target.value)} required />
 
-					<label>Password</label>
-					<input type="password" placeholder="••••••••" />
+					<label htmlFor="su-email">Email</label>
+					<input id="su-email" type="email" placeholder="juan@email.com"
+						value={form.email} onChange={(e) => handleChange('email', e.target.value)} required />
 
-					<label>Confirm Password</label>
-					<input type="password" placeholder="••••••••" />
+					<label htmlFor="su-password">Password</label>
+					<input id="su-password" type="password" placeholder="Min. 8 characters"
+						value={form.password} onChange={(e) => handleChange('password', e.target.value)} required />
 
-					<button type="button" className="auth-submit">Create Account</button>
+					<label htmlFor="su-confirm">Confirm Password</label>
+					<input id="su-confirm" type="password" placeholder="••••••••"
+						value={form.confirmPassword} onChange={(e) => handleChange('confirmPassword', e.target.value)} required />
+
+					<button type="submit" className="auth-submit" disabled={loading || !!success}>
+						{loading ? 'Creating Account…' : 'Create Account'}
+					</button>
+					<p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>
+						Already have an account?{' '}
+						<button type="button" className="link" onClick={() => setPage('auth')}>Log In</button>
+					</p>
 				</form>
 			</div>
 		</section>
@@ -41,4 +76,5 @@ function SignUpPage() {
 }
 
 export default SignUpPage;
+
 

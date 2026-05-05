@@ -8,13 +8,11 @@ import '../../styles/shared/sentinel.css';
 import '../../styles/user/HazardReportPage.css';
 
 // Fix Leaflet default icon paths broken by webpack
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
+import '../../utils/leafletIcons';
 
 const BULACAN_CENTER = [14.7942, 120.8793];
+const RATE_LIMIT_MS = 2 * 60 * 1000; // 2-minute cooldown between submissions
+const RATE_KEY = 'elikas_last_hazard_report';
 
 // ── Click anywhere on the map to place a pin ─────────────────────
 function ClickToPin({ onPin }) {
@@ -62,14 +60,16 @@ function GpsLocator({ onPin }) {
 }
 
 // ── Main page ────────────────────────────────────────────────────
-function HazardReportPage({ currentUser }) {
+function HazardReportPage() {
+	const { currentUser } = useAuth();
 	const [form, setForm] = useState({
 		hazard_type: 'Flooding',
 		location: '',
 		description: ''
 	});
-	const [pin, setPin]           = useState(null); // { lat, lon }
+	const [pin, setPin]           = useState(null);
 	const [geocoding, setGeocoding] = useState(false);
+	const [photoFile, setPhotoFile] = useState(null);
 	const [loading, setLoading]   = useState(false);
 	const [error, setError]       = useState('');
 	const [success, setSuccess]   = useState('');
@@ -97,6 +97,14 @@ function HazardReportPage({ currentUser }) {
 		setError('');
 		setSuccess('');
 
+		// Rate-limit check
+		const lastSubmit = localStorage.getItem(RATE_KEY);
+		if (lastSubmit && Date.now() - Number(lastSubmit) < RATE_LIMIT_MS) {
+			const remaining = Math.ceil((RATE_LIMIT_MS - (Date.now() - Number(lastSubmit))) / 1000);
+			setError(`Please wait ${remaining}s before submitting another report.`);
+			return;
+		}
+
 		if (!form.location.trim()) {
 			setError('Please enter or pin a location.');
 			return;
@@ -108,6 +116,24 @@ function HazardReportPage({ currentUser }) {
 
 		setLoading(true);
 		const { data: { user } } = await supabase.auth.getUser();
+
+		// Upload photo if one was selected
+		let photo_url = null;
+		if (photoFile) {
+			const ext = photoFile.name.split('.').pop();
+			const path = `${user?.id ?? 'anon'}/${Date.now()}.${ext}`;
+			const { data: uploadData, error: uploadErr } = await supabase.storage
+				.from('hazard-photos')
+				.upload(path, photoFile, { upsert: false });
+			if (uploadErr) {
+				setLoading(false);
+				setError(`Photo upload failed: ${uploadErr.message}`);
+				return;
+			}
+			const { data: { publicUrl } } = supabase.storage.from('hazard-photos').getPublicUrl(uploadData.path);
+			photo_url = publicUrl;
+		}
+
 		const { error: err } = await supabase.from('hazard_reports').insert([{
 			hazard_type:   form.hazard_type,
 			location:      form.location.trim(),
@@ -116,15 +142,18 @@ function HazardReportPage({ currentUser }) {
 			description:   form.description.trim(),
 			status:        'pending',
 			reporter_id:   user?.id ?? null,
-			reporter_name: currentUser?.name ?? user?.email ?? null
+			reporter_name: currentUser?.name ?? user?.email ?? null,
+			...(photo_url ? { photo_url } : {}),
 		}]);
 		setLoading(false);
 
 		if (err) { setError(err.message); return; }
 
+		localStorage.setItem(RATE_KEY, String(Date.now()));
 		setSuccess('Report submitted. Our team will review it shortly.');
 		setForm({ hazard_type: 'Flooding', location: '', description: '' });
 		setPin(null);
+		setPhotoFile(null);
 	};
 
 	return (
@@ -199,6 +228,21 @@ function HazardReportPage({ currentUser }) {
 						<textarea
 							rows="4"
 							placeholder="Describe what happened..."
+							value={form.description}
+							onChange={(e) => handleChange('description', e.target.value)}
+						/>
+
+						<label>Photo (optional)</label>
+						<input
+							type="file"
+							accept="image/*"
+							onChange={(e) => setPhotoFile(e.target.files[0] || null)}
+						/>
+						{photoFile && (
+							<p style={{ fontSize: '0.82rem', color: 'var(--sent-text-muted)' }}>
+								Selected: {photoFile.name} ({(photoFile.size / 1024).toFixed(0)} KB)
+							</p>
+						)}
 							value={form.description}
 							onChange={(e) => handleChange('description', e.target.value)}
 						/>

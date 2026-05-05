@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../config/supabase';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import WeatherWidget from '../../components/WeatherWidget';
 
-function AdminDashboardPage({ user, onLogout }) {
+function AdminDashboardPage() {
+	const { currentUser: user, handleLogout: onLogout } = useAuth();
 	const [stats, setStats]           = useState({ users: '—', centers: '—', alerts: '—', pending: '—' });
 	const [pendingReports, setPendingReports] = useState([]);
 	const [loading, setLoading]       = useState(true);

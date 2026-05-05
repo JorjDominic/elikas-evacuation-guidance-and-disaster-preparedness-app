@@ -2,15 +2,10 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { supabase } from '../../config/supabase';
+import { useAlerts } from '../../hooks/useAlerts';
+import '../../utils/leafletIcons';
 import '../../styles/shared/sentinel.css';
 import WeatherWidget from '../../components/WeatherWidget';
-
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
 const BULACAN_CENTER = [14.7942, 120.8793];
 
@@ -21,25 +16,20 @@ function FlyTo({ position }) {
 }
 
 function AlertsPage() {
-	const [alerts, setAlerts] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
+	const { alerts, loading, error } = useAlerts();
 	const [flyTo, setFlyTo] = useState(null);
+	const [levelFilter, setLevelFilter] = useState('all');
+	const [search, setSearch] = useState('');
 
-	useEffect(() => {
-		async function fetchAlerts() {
-			const { data, error: err } = await supabase
-				.from('alerts')
-				.select('*')
-				.order('created_at', { ascending: false });
-			if (err) setError(err.message);
-			else setAlerts(data || []);
-			setLoading(false);
-		}
-		fetchAlerts();
-	}, []);
+	const filtered = alerts.filter((a) => {
+		const matchLevel = levelFilter === 'all' || a.level === levelFilter;
+		const matchSearch = !search ||
+			(a.title || '').toLowerCase().includes(search.toLowerCase()) ||
+			(a.area  || '').toLowerCase().includes(search.toLowerCase());
+		return matchLevel && matchSearch;
+	});
 
-	const mappable = alerts.filter((a) => a.latitude != null && a.longitude != null);
+	const mappable = filtered.filter((a) => a.latitude != null && a.longitude != null);
 
 	return (
 		<section className="app-page">
@@ -60,10 +50,33 @@ function AlertsPage() {
 					</div>
 				</div>
 
-				{loading && <p>Loading alertsâ€¦</p>}
+				{/* Search & filter bar */}
+				<div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem', alignItems: 'center' }}>
+					<input
+						type="search"
+						placeholder="Search alerts…"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						style={{ padding: '0.45rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border-color, #ddd)', fontSize: '0.9rem', flex: '1 1 160px' }}
+						aria-label="Search alerts"
+					/>
+					{['all', 'high', 'medium', 'low'].map((lvl) => (
+						<button
+							key={lvl}
+							type="button"
+							className={`btn-inline ${levelFilter === lvl ? 'primary' : ''}`}
+							onClick={() => setLevelFilter(lvl)}
+							style={{ textTransform: 'capitalize' }}
+						>
+							{lvl === 'all' ? 'All' : lvl}
+						</button>
+					))}
+				</div>
+
+				{loading && <p>Loading alerts…</p>}
 				{error && <p style={{ color: 'var(--color-danger, red)' }}>{error}</p>}
-				{!loading && !error && alerts.length === 0 && (
-					<p>No active alerts at this time.</p>
+				{!loading && !error && filtered.length === 0 && (
+					<p>No alerts match your filters.</p>
 				)}
 
 				{/* Overview map â€” only when at least one alert has coordinates */}
@@ -94,7 +107,7 @@ function AlertsPage() {
 				)}
 
 				<div className="alert-feed">
-					{alerts.map((alert) => (
+					{filtered.map((alert) => (
 						<article key={alert.id} className={`alert-row ${alert.level}`}>
 							<div style={{ flex: 1 }}>
 								<h3>{alert.title}</h3>

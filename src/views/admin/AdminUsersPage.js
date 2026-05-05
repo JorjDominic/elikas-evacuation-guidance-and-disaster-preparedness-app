@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { listProfiles, updateProfile, setUserActive, inviteUser, writeAuditLog } from '../../services/adminService';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminUsersPage.css';
 
@@ -188,7 +189,8 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
 }
 
 // ── Main Page ───────────────────────────────────────────────────────────────
-function AdminUsersPage({ currentUser }) {
+function AdminUsersPage() {
+  const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

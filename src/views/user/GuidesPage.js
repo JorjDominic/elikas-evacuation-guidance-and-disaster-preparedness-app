@@ -1,27 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import React, { useState } from 'react';
+import { useGuides } from '../../hooks/useGuides';
 import '../../styles/shared/sentinel.css';
 
 function GuidesPage() {
-	const [guides, setGuides] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
+	const { guides, loading, error } = useGuides();
+	const [search, setSearch] = useState('');
 
-	useEffect(() => {
-		async function fetchGuides() {
-			const { data, error: err } = await supabase
-				.from('guides')
-				.select('*')
-				.order('created_at', { ascending: false });
-			if (err) setError(err.message);
-			else setGuides(data || []);
-			setLoading(false);
-		}
-		fetchGuides();
-	}, []);
+	const filtered = search
+		? guides.filter((g) =>
+				(g.title || '').toLowerCase().includes(search.toLowerCase()) ||
+				(g.content || '').toLowerCase().includes(search.toLowerCase())
+		  )
+		: guides;
 
-	const typeGuides = guides.filter((g) => g.type === 'Guide');
-	const typeRoutes = guides.filter((g) => g.type === 'Route');
+	const typeGuides = filtered.filter((g) => g.type === 'Guide');
+	const typeRoutes = filtered.filter((g) => g.type === 'Route');
 
 	return (
 		<section className="app-page">
@@ -48,6 +41,20 @@ function GuidesPage() {
 
 				{loading && <p>Loading guides…</p>}
 				{error && <p style={{ color: 'var(--color-danger, red)' }}>{error}</p>}
+
+				{/* Search */}
+				{!loading && !error && (
+					<div style={{ marginBottom: '1rem' }}>
+						<input
+							type="search"
+							placeholder="Search guides and routes…"
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							style={{ padding: '0.45rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border-color, #ddd)', fontSize: '0.9rem', width: '100%', maxWidth: '360px' }}
+							aria-label="Search guides"
+						/>
+					</div>
+				)}
 
 				{!loading && !error && (
 					<>
