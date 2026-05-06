@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useAlerts } from '../../hooks/useAlerts';
+import { useNotifications } from '../../hooks/useNotifications';
 import '../../styles/shared/sentinel.css';
 import WeatherWidget from '../../components/WeatherWidget';
 
 function DashboardPage() {
 	const { currentUser: user, setPage: onNavigate } = useAuth();
 	const { alerts: recentAlertsAll, loading: alertsLoading } = useAlerts();
+	const { permission, requestPermission } = useNotifications();
 	const [stats, setStats] = useState({ centers: '—', routes: '—' });
 	const [syncedAt, setSyncedAt] = useState('');
 	const [statsLoading, setStatsLoading] = useState(true);
@@ -54,6 +56,13 @@ function DashboardPage() {
 				<div className="app-page-head">
 					<span className="page-chip">Resident Control Panel</span>
 				</div>
+
+				{permission === 'default' && (
+					<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 1rem', background: 'var(--color-primary-soft, #eff6ff)', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.88rem' }}>
+						<span>🔔 Enable browser notifications to get instant high-severity alerts.</span>
+						<button type="button" className="btn-inline primary" onClick={requestPermission} style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>Enable</button>
+					</div>
+				)}
 
 				<div className="metrics-grid">
 					{metricCards.map((item) => (

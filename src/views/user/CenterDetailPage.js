@@ -240,6 +240,17 @@ function CenterDetailPage({ centerId, onBack }) {
 
 				<div className="app-page-head">
 					<button type="button" className="btn-inline" onClick={onBack}>← Back to Centers</button>
+					{hasCoords && (
+						<a
+							href={`https://maps.google.com/?q=${center.latitude},${center.longitude}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="btn-inline primary"
+							style={{ textDecoration: 'none' }}
+						>
+							Open in Google Maps ↗
+						</a>
+					)}
 				</div>
 
 				<h2 className="section-title">Center Operations</h2>

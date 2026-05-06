@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
 import { reverseGeocode } from '../../services/weatherService';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/user/HazardReportPage.css';
 

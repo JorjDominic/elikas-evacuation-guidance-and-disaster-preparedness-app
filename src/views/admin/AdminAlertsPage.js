@@ -1,8 +1,9 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
+import { writeAuditLog } from '../../services/adminService';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
 
@@ -159,7 +160,8 @@ function AlertModal({ initial, onSave, onClose }) {
 }
 
 function AdminAlertsPage() {
-	const [alerts, setAlerts] = useState([]);
+	const { currentUser } = useAuth();
+	const [alerts, setAlerts] = useState([]);;
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [modal, setModal] = useState(null);
@@ -182,11 +184,13 @@ function AdminAlertsPage() {
 
 	const handleSave = async (form) => {
 		if (modal?.mode === 'add') {
-			const { error: err } = await supabase.from('alerts').insert([form]);
+			const { data, error: err } = await supabase.from('alerts').insert([form]).select().single();
 			if (err) return { error: err.message };
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'alert.create', targetType: 'alert', targetId: data?.id, meta: { title: form.title } });
 		} else {
 			const { error: err } = await supabase.from('alerts').update(form).eq('id', modal.alert.id);
 			if (err) return { error: err.message };
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'alert.update', targetType: 'alert', targetId: modal.alert.id, meta: { title: form.title } });
 		}
 		await fetchAlerts();
 		return {};
@@ -196,7 +200,10 @@ function AdminAlertsPage() {
 		setDeleting(true);
 		const { error: err } = await supabase.from('alerts').delete().eq('id', deleteTarget.id);
 		if (err) setError(err.message);
-		else await fetchAlerts();
+		else {
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'alert.delete', targetType: 'alert', targetId: deleteTarget.id, meta: { title: deleteTarget.title } });
+			await fetchAlerts();
+		}
 		setDeleting(false);
 		setDeleteTarget(null);
 	};

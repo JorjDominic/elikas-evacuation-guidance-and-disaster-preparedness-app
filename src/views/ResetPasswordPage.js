@@ -49,10 +49,10 @@ function ResetPasswordPage({ onDone }) {
       {/* ── Nav: identical to landing ── */}
       <header className="top-nav">
         <div className="layout nav-inner">
-          <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
+          <span className="brand">
             <img src="/elikas icon transparent.png" alt="eLikas logo" className="nav-logo" />
             eLikas Bulacan
-          </a>
+          </span>
         </div>
       </header>
       <section className="sb-forgot-card">

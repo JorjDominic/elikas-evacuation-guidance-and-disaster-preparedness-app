@@ -32,10 +32,10 @@ function ForgotPasswordPage({ onBackToLogin, onSubmitReset }) {
       {/* ── Nav: identical to landing ── */}
       <header className="top-nav">
         <div className="layout nav-inner">
-          <a className="brand" href="#" onClick={(e) => { e.preventDefault(); onBackToLogin(); }}>
+          <button type="button" className="brand" onClick={onBackToLogin}>
             <img src="/elikas icon transparent.png" alt="eLikas logo" className="nav-logo" />
             eLikas Bulacan
-          </a>
+          </button>
           <nav className="desktop-links" aria-label="Primary">
             <a href="#features" onClick={(e) => { e.preventDefault(); onBackToLogin(); }}>Features</a>
             <a href="#map" onClick={(e) => { e.preventDefault(); onBackToLogin(); }}>Map</a>

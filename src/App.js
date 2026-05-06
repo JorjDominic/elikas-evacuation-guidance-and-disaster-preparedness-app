@@ -1,26 +1,42 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import AppTopNav from './views/AppTopNav';
+import ThemeToggleButton from './views/ThemeToggleButton';
+
+// ── Eagerly loaded (tiny, needed on first paint) ─────────────────────────────
 import LandingPage from './views';
 import LoginPage from './views/LoginPage';
 import ForgotPasswordPage from './views/ForgotPasswordPage';
 import SignUpPage from './views/SignUpPage';
-import DashboardPage from './views/user/DashboardPage';
-import AdminDashboardPage from './views/admin/AdminDashboardPage';
-import CentersPage from './views/user/CentersPage';
-import CenterDetailPage from './views/user/CenterDetailPage';
-import AlertsPage from './views/user/AlertsPage';
-import GuidesPage from './views/user/GuidesPage';
-import HazardReportPage from './views/user/HazardReportPage';
-import MyReportsPage from './views/user/MyReportsPage';
-import AdminCentersPage from './views/admin/AdminCentersPage';
-import AdminAlertsPage from './views/admin/AdminAlertsPage';
-import AdminGuidesPage from './views/admin/AdminGuidesPage';
-import AdminReportsPage from './views/admin/AdminReportsPage';
-import AdminUsersPage from './views/admin/AdminUsersPage';
-import AdminAuditLogsPage from './views/admin/AdminAuditLogsPage';
-import AppTopNav from './views/AppTopNav';
-import ThemeToggleButton from './views/ThemeToggleButton';
 import ResetPasswordPage from './views/ResetPasswordPage';
+
+// ── Lazy-loaded (loaded only when the user navigates there) ──────────────────
+const DashboardPage      = React.lazy(() => import('./views/user/DashboardPage'));
+const AdminDashboardPage = React.lazy(() => import('./views/admin/AdminDashboardPage'));
+const CentersPage        = React.lazy(() => import('./views/user/CentersPage'));
+const CenterDetailPage   = React.lazy(() => import('./views/user/CenterDetailPage'));
+const AlertsPage         = React.lazy(() => import('./views/user/AlertsPage'));
+const GuidesPage         = React.lazy(() => import('./views/user/GuidesPage'));
+const HazardReportPage   = React.lazy(() => import('./views/user/HazardReportPage'));
+const MyReportsPage      = React.lazy(() => import('./views/user/MyReportsPage'));
+const ProfilePage        = React.lazy(() => import('./views/user/ProfilePage'));
+const AdminCentersPage   = React.lazy(() => import('./views/admin/AdminCentersPage'));
+const AdminAlertsPage    = React.lazy(() => import('./views/admin/AdminAlertsPage'));
+const AdminGuidesPage    = React.lazy(() => import('./views/admin/AdminGuidesPage'));
+const AdminReportsPage   = React.lazy(() => import('./views/admin/AdminReportsPage'));
+const AdminUsersPage     = React.lazy(() => import('./views/admin/AdminUsersPage'));
+const AdminAuditLogsPage = React.lazy(() => import('./views/admin/AdminAuditLogsPage'));
+
+// ── Fallback shown while lazy chunks load ────────────────────────────────────
+function PageLoader() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: 'var(--sent-text-muted, #5a5850)', fontFamily: 'Public Sans, sans-serif', fontSize: '0.9rem' }}>
+        Loading…
+      </span>
+    </div>
+  );
+}
 
 function AppContent() {
   const {
@@ -62,6 +78,7 @@ function AppContent() {
     { key: 'guides',        label: 'Guides'         },
     { key: 'hazard-report', label: 'Report Hazard'  },
     { key: 'my-reports',    label: 'My Reports'     },
+    { key: 'profile',       label: 'Profile'        },
   ];
 
   const adminNavItems = [
@@ -79,7 +96,7 @@ function AppContent() {
   const renderPage = () => {
     const adminPage = page.startsWith('admin-');
     if (adminPage && !isAdmin) return <DashboardPage />;
-    if (!adminPage && isAdmin && ['dashboard','centers','center-detail','alerts','guides','hazard-report','my-reports'].includes(page)) {
+    if (!adminPage && isAdmin && ['dashboard','centers','center-detail','alerts','guides','hazard-report','my-reports','profile'].includes(page)) {
       return <AdminDashboardPage />;
     }
 
@@ -91,6 +108,7 @@ function AppContent() {
       case 'guides':         return <GuidesPage />;
       case 'hazard-report':  return <HazardReportPage />;
       case 'my-reports':     return <MyReportsPage />;
+      case 'profile':        return <ProfilePage />;
       case 'admin-dashboard': return <AdminDashboardPage />;
       case 'admin-centers':  return <AdminCentersPage />;
       case 'admin-alerts':   return <AdminAlertsPage />;
@@ -160,9 +178,11 @@ function AppContent() {
         onNavigate={setPage}
         onLogout={handleLogout}
       />
-      <div key={page}>
-        {renderPage()}
-      </div>
+      <Suspense fallback={<PageLoader />}>
+        <div key={page}>
+          {renderPage()}
+        </div>
+      </Suspense>
     </div>
   );
 }

@@ -98,10 +98,14 @@ function CentersPage({ onSelectCenter }) {
 	const NEAR_RADIUS_M = 10000;   // 10 km — anything within this counts as "nearby"
 	const NEAR_MIN_RESULTS = 5;    // ensure at least this many even if all are >10km
 
-	// Centers list — annotated with distance when we have GPS; in nearMode, filter to nearby only
+	// Centers list — annotated with distance; filtered by status and nearMode
 	const displayedCenters = useMemo(() => {
-		if (!userCoords) return centers;
-		const annotated = centers.map((c) => {
+		let list = statusFilter === 'all'
+			? centers
+			: centers.filter((c) => (c.status || '').toLowerCase() === statusFilter);
+
+		if (!userCoords) return list;
+		const annotated = list.map((c) => {
 			if (c.latitude == null || c.longitude == null) return { ...c, _distance: null };
 			return { ...c, _distance: haversineMeters(userCoords.lat, userCoords.lon, c.latitude, c.longitude) };
 		});
@@ -111,13 +115,11 @@ function CentersPage({ onSelectCenter }) {
 			.filter((c) => c._distance != null)
 			.sort((a, b) => a._distance - b._distance);
 
-		// Primary: keep centers within the radius
 		const withinRadius = sorted.filter((c) => c._distance <= NEAR_RADIUS_M);
-		// Fallback: if too few, take the nearest N regardless of radius
 		return withinRadius.length >= NEAR_MIN_RESULTS
 			? withinRadius
 			: sorted.slice(0, NEAR_MIN_RESULTS);
-	}, [centers, userCoords, nearMode]);
+	}, [centers, userCoords, nearMode, statusFilter]);
 
 	const mappable = displayedCenters.filter((c) => c.latitude != null && c.longitude != null);
 
@@ -158,6 +160,19 @@ function CentersPage({ onSelectCenter }) {
 						<div className="app-page-head" style={{ marginBottom: '0.85rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
 							<div style={{ fontSize: '0.88rem', color: 'var(--sent-text-muted)' }}>
 								{nearbySummary}
+							</div>
+							<div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+								{['all', 'open', 'full', 'closed'].map((s) => (
+									<button
+										key={s}
+										type="button"
+										className={`btn-inline ${statusFilter === s ? 'primary' : ''}`}
+										onClick={() => setStatusFilter(s)}
+										style={{ textTransform: 'capitalize' }}
+									>
+										{s === 'all' ? 'All' : s}
+									</button>
+								))}
 							</div>
 							<button
 								type="button"

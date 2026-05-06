@@ -1,15 +1,86 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
+import { writeAuditLog } from '../../services/adminService';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 
 import '../../utils/leafletIcons';
 
+const PAGE_SIZE = 20;
+
+function exportCSV(data, filename) {
+	if (!data.length) return;
+	const headers = ['id', 'hazard_type', 'location', 'description', 'status', 'reporter_name', 'created_at'];
+	const rows = data.map((r) => headers.map((h) => JSON.stringify(r[h] ?? '')).join(','));
+	const csv = [headers.join(','), ...rows].join('\n');
+	const blob = new Blob([csv], { type: 'text/csv' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url; a.download = filename; a.click();
+	URL.revokeObjectURL(url);
+}
+
 const BULACAN_CENTER = [14.7942, 120.8793];
 
 const STATUS_COLORS = { pending: '#d97706', approved: '#16a34a', rejected: '#dc2626' };
+
+// ── Photo Lightbox ──────────────────────────────────────────────────────────
+function PhotoLightbox({ url, onClose }) {
+	return (
+		<div
+			style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+			onClick={onClose}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Report photo"
+		>
+			<button
+				type="button"
+				onClick={onClose}
+				aria-label="Close photo"
+				style={{ position: 'absolute', top: '1rem', right: '1.25rem', background: 'none', border: 'none', color: '#fff', fontSize: '2rem', cursor: 'pointer', lineHeight: 1 }}
+			>
+				&times;
+			</button>
+			<img
+				src={url}
+				alt="Hazard report attachment"
+				style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: '0.5rem', objectFit: 'contain' }}
+				onClick={(e) => e.stopPropagation()}
+			/>
+		</div>
+	);
+}
+
+// ── Confirm Dialog ──────────────────────────────────────────────────────────
+function ConfirmStatusDialog({ report, action, onConfirm, onCancel }) {
+	const color = action === 'approved' ? '#16a34a' : '#dc2626';
+	const label = action === 'approved' ? 'Approve' : 'Reject';
+	return (
+		<div
+			style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+			onClick={onCancel}
+			role="alertdialog"
+			aria-modal="true"
+		>
+			<div
+				style={{ background: 'var(--card-bg, #fff)', borderRadius: '0.75rem', padding: '1.5rem', maxWidth: '360px', width: '92vw', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<h3 style={{ margin: '0 0 0.5rem' }}>{label} this report?</h3>
+				<p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--sent-text-muted)' }}>
+					<strong>{report.hazard_type}</strong>{report.location ? ` — ${report.location}` : ''}
+				</p>
+				<div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+					<button type="button" className="btn-inline" onClick={onCancel}>Cancel</button>
+					<button type="button" className="btn-inline" style={{ background: color, color: '#fff', border: 'none' }} onClick={onConfirm}>{label}</button>
+				</div>
+			</div>
+		</div>
+	);
+}
 
 function FlyTo({ position }) {
 	const map = useMap();
@@ -18,11 +89,15 @@ function FlyTo({ position }) {
 }
 
 function AdminReportsPage() {
+	const { currentUser } = useAuth();
 	const [reports, setReports] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [flyTo, setFlyTo] = useState(null);
 	const [highlighted, setHighlighted] = useState(null);
+	const [pageNum, setPageNum] = useState(0);
+	const [confirmPending, setConfirmPending] = useState(null); // { report, action }
+	const [photoUrl, setPhotoUrl] = useState(null);
 
 	const fetchReports = useCallback(async () => {
 		setLoading(true);
@@ -37,12 +112,25 @@ function AdminReportsPage() {
 
 	useEffect(() => { fetchReports(); }, [fetchReports]);
 
+	// Realtime subscription
+	useEffect(() => {
+		const channel = supabase
+			.channel('admin-reports-realtime')
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'hazard_reports' }, () => fetchReports())
+			.subscribe();
+		return () => supabase.removeChannel(channel);
+	}, [fetchReports]);
+
 	const updateStatus = async (id, status) => {
-		const { error: err } = await supabase
-			.from('hazard_reports')
-			.update({ status })
-			.eq('id', id);
+		const report = reports.find((r) => r.id === id);
+		const { error: err } = await supabase.from('hazard_reports').update({ status }).eq('id', id);
 		if (err) { setError(err.message); return; }
+		await writeAuditLog({
+			actorId: currentUser?.id, actorName: currentUser?.name,
+			action: status === 'approved' ? 'report.approve' : 'report.reject',
+			targetType: 'hazard_report', targetId: id,
+			meta: { hazard_type: report?.hazard_type, location: report?.location }
+		});
 		await fetchReports();
 	};
 
@@ -53,8 +141,11 @@ function AdminReportsPage() {
 
 	const pendingCount = reports.filter((r) => r.status === 'pending').length;
 	const mappable = reports.filter((r) => r.latitude != null && r.longitude != null);
+	const totalPages = Math.ceil(reports.length / PAGE_SIZE);
+	const pageReports = reports.slice(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE);
 
 	return (
+		<>
 		<section className="app-page">
 			<div className="app-shell">
 				<div className="page-hero">
@@ -68,6 +159,9 @@ function AdminReportsPage() {
 
 				<div className="app-page-head">
 					<span className="page-chip">Moderation Console</span>
+					<button type="button" className="btn-inline" onClick={() => exportCSV(reports, 'hazard-reports.csv')} disabled={reports.length === 0}>
+						⇓ Export CSV
+					</button>
 				</div>
 
 				<div className="sub-grid" style={{ marginBottom: '0.9rem' }}>
@@ -125,6 +219,7 @@ function AdminReportsPage() {
 									<th>Type</th>
 									<th>Location</th>
 									<th>Description</th>
+									<th>Photo</th>
 									<th>Date</th>
 									<th>Status</th>
 									<th>Action</th>
@@ -132,9 +227,9 @@ function AdminReportsPage() {
 							</thead>
 							<tbody>
 								{reports.length === 0 ? (
-									<tr><td colSpan="6" style={{ textAlign: 'center' }}>No reports found.</td></tr>
+									<tr><td colSpan="7" style={{ textAlign: 'center' }}>No reports found.</td></tr>
 								) : (
-									reports.map((report) => (
+									pageReports.map((report) => (
 										<tr
 											key={report.id}
 											style={highlighted === report.id ? { background: 'var(--color-primary-soft, #eff6ff)' } : {}}
@@ -142,6 +237,17 @@ function AdminReportsPage() {
 											<td>{report.hazard_type}</td>
 											<td>{report.location}</td>
 											<td>{report.description}</td>
+											<td>
+												{report.photo_url ? (
+													<button
+														type="button"
+														className="btn-inline"
+														onClick={() => setPhotoUrl(report.photo_url)}
+													>
+														📷 View
+													</button>
+												) : <span style={{ opacity: 0.4 }}>—</span>}
+											</td>
 											<td><small>{new Date(report.created_at).toLocaleDateString()}</small></td>
 											<td><span className={`status-pill ${report.status}`}>{report.status}</span></td>
 											<td>
@@ -160,20 +266,20 @@ function AdminReportsPage() {
 															<button
 																type="button"
 																className="btn-inline"
-																onClick={() => updateStatus(report.id, 'approved')}
+																onClick={() => setConfirmPending({ report, action: 'approved' })}
 															>
 																Approve
 															</button>
 															<button
 																type="button"
 																className="btn-inline danger"
-																onClick={() => updateStatus(report.id, 'rejected')}
+																onClick={() => setConfirmPending({ report, action: 'rejected' })}
 															>
 																Reject
 															</button>
 														</>
 													) : (
-														<span style={{ opacity: 0.5 }}>â€”</span>
+														<span style={{ opacity: 0.5 }}>—</span>
 													)}
 												</div>
 											</td>
@@ -184,8 +290,34 @@ function AdminReportsPage() {
 						</table>
 					</div>
 				)}
+
+				{/* Pagination */}
+				{totalPages > 1 && (
+					<div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem', alignItems: 'center' }}>
+						<button type="button" className="btn-inline" disabled={pageNum === 0} onClick={() => setPageNum((p) => p - 1)}>← Prev</button>
+						<span style={{ fontSize: '0.85rem' }}>Page {pageNum + 1} / {totalPages}</span>
+						<button type="button" className="btn-inline" disabled={pageNum >= totalPages - 1} onClick={() => setPageNum((p) => p + 1)}>Next →</button>
+					</div>
+				)}
 			</div>
 		</section>
+
+		{/* Photo lightbox */}
+		{photoUrl && <PhotoLightbox url={photoUrl} onClose={() => setPhotoUrl(null)} />}
+
+		{/* Approve / Reject confirm */}
+		{confirmPending && (
+			<ConfirmStatusDialog
+				report={confirmPending.report}
+				action={confirmPending.action}
+				onConfirm={async () => {
+					await updateStatus(confirmPending.report.id, confirmPending.action);
+					setConfirmPending(null);
+				}}
+				onCancel={() => setConfirmPending(null)}
+			/>
+		)}
+		</>
 	);
 }
 

@@ -1190,3 +1190,80 @@
   border: 1px solid var(--sent-line);
   color: var(--sent-text-muted);
 }
+
+/* ── Mobile & Touch Polish ───────────────────────────────── */
+
+/* Eliminate tap-highlight flash on interactive elements */
+button,
+a,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Minimum tap target size (WCAG 2.5.8 / iOS HIG) */
+.btn-inline,
+.app-top-nav__btn,
+.sent-modal__btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* iOS safe area padding for full-screen / standalone mode */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .app-page {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+  .app-top-nav {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
+}
+
+/* Smooth momentum scrolling on touch devices */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent body scroll bounce on iOS when a modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Table horizontal scroll on small screens */
+.table-shell {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 480px) {
+  /* Smaller hero text to fit narrow screens */
+  .page-hero h1 {
+    font-size: clamp(1.4rem, 6.5vw, 2rem);
+  }
+
+  /* Single-column metrics */
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Full-width action buttons stacked */
+  .action-row {
+    flex-direction: column;
+  }
+
+  .action-row .btn-inline {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Widen modal on tiny screens */
+  .sent-modal {
+    width: 97vw;
+    padding: 1.25rem 1rem 1rem;
+  }
+}

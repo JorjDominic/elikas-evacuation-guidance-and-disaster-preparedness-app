@@ -1,6 +1,7 @@
 {
   "short_name": "eLikas",
   "name": "eLikas Evacuation Guidance and Disaster Preparedness",
+  "description": "Real-time alerts, evacuation center locator, and hazard reporting for Bulacan residents.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,23 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "theme_color": "#1a3a5f",
-  "background_color": "#fcf9ef"
+  "background_color": "#fcf9ef",
+  "categories": ["emergency", "government", "utilities"],
+  "lang": "en-PH",
+  "dir": "ltr"
 }

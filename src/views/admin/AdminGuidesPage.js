@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../config/supabase';
+import { writeAuditLog } from '../../services/adminService';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
 
@@ -59,6 +61,7 @@ function GuideModal({ initial, onSave, onClose }) {
 }
 
 function AdminGuidesPage() {
+	const { currentUser } = useAuth();
 	const [guides, setGuides] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -81,11 +84,13 @@ function AdminGuidesPage() {
 
 	const handleSave = async (form) => {
 		if (modal?.mode === 'add') {
-			const { error: err } = await supabase.from('guides').insert([form]);
+			const { data, error: err } = await supabase.from('guides').insert([form]).select().single();
 			if (err) return { error: err.message };
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.create', targetType: 'guide', targetId: data?.id, meta: { title: form.title } });
 		} else {
 			const { error: err } = await supabase.from('guides').update(form).eq('id', modal.guide.id);
 			if (err) return { error: err.message };
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.update', targetType: 'guide', targetId: modal.guide.id, meta: { title: form.title } });
 		}
 		await fetchGuides();
 		return {};
@@ -95,7 +100,10 @@ function AdminGuidesPage() {
 		setDeleting(true);
 		const { error: err } = await supabase.from('guides').delete().eq('id', deleteTarget.id);
 		if (err) setError(err.message);
-		else await fetchGuides();
+		else {
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.delete', targetType: 'guide', targetId: deleteTarget.id, meta: { title: deleteTarget.title } });
+			await fetchGuides();
+		}
 		setDeleting(false);
 		setDeleteTarget(null);
 	};

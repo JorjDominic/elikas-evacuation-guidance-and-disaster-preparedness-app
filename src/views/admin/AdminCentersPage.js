@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
+import { writeAuditLog } from '../../services/adminService';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
 
 import '../../utils/leafletIcons';
+
+const PAGE_SIZE = 20;
 
 const BULACAN_CENTER = [14.7942, 120.8793];
 
@@ -220,6 +223,7 @@ function CenterModal({ initial, onSave, onClose }) {
 }
 
 function AdminCentersPage() {
+  const { currentUser } = useAuth();
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -228,6 +232,7 @@ function AdminCentersPage() {
   const [deleting, setDeleting] = useState(false);
   const [highlighted, setHighlighted] = useState(null);
   const [flyTo, setFlyTo] = useState(null);
+  const [pageNum, setPageNum] = useState(0);
   const rowRefs = useRef({});
 
   const fetchCenters = useCallback(async () => {
@@ -245,14 +250,13 @@ function AdminCentersPage() {
 
   const handleSave = async (payload) => {
     if (modal.mode === 'add') {
-      const { error: err } = await supabase.from('evacuation_centers').insert([payload]);
+      const { data, error: err } = await supabase.from('evacuation_centers').insert([payload]).select().single();
       if (err) return { error: err.message };
+      await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'center.create', targetType: 'center', targetId: data?.id, meta: { name: payload.name } });
     } else {
-      const { error: err } = await supabase
-        .from('evacuation_centers')
-        .update(payload)
-        .eq('id', modal.center.id);
+      const { error: err } = await supabase.from('evacuation_centers').update(payload).eq('id', modal.center.id);
       if (err) return { error: err.message };
+      await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'center.update', targetType: 'center', targetId: modal.center.id, meta: { name: payload.name } });
     }
     await fetchCenters();
     return {};
@@ -260,14 +264,24 @@ function AdminCentersPage() {
 
   const handleDelete = async () => {
     setDeleting(true);
-    const { error: err } = await supabase
-      .from('evacuation_centers')
-      .delete()
-      .eq('id', deleteTarget.id);
+    const { error: err } = await supabase.from('evacuation_centers').delete().eq('id', deleteTarget.id);
     if (err) setError(err.message);
-    else await fetchCenters();
+    else {
+      await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'center.delete', targetType: 'center', targetId: deleteTarget.id, meta: { name: deleteTarget.name } });
+      await fetchCenters();
+    }
     setDeleting(false);
     setDeleteTarget(null);
+  };
+
+  const handleOccupancy = async (center, delta) => {
+    const next = Math.max(0, (center.current_occupancy || 0) + delta);
+    const { error: err } = await supabase
+      .from('evacuation_centers')
+      .update({ current_occupancy: next })
+      .eq('id', center.id);
+    if (err) { setError(err.message); return; }
+    setCenters((prev) => prev.map((c) => c.id === center.id ? { ...c, current_occupancy: next } : c));
   };
 
   const statusClass = (s) => ({ open: 'open', full: 'warning', closed: 'closed' }[s] || 'open');
@@ -281,6 +295,8 @@ function AdminCentersPage() {
   };
 
   const mappable = centers.filter((c) => c.latitude != null && c.longitude != null);
+  const totalPages = Math.ceil(centers.length / PAGE_SIZE);
+  const pageCenters = centers.slice(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE);
 
   return (
     <section className="app-page">
@@ -359,7 +375,7 @@ function AdminCentersPage() {
                 </tr>
               </thead>
               <tbody>
-                {centers.map((center) => (
+                {pageCenters.map((center) => (
                   <tr
                     key={center.id}
                     ref={(el) => { rowRefs.current[center.id] = el; }}
@@ -367,7 +383,12 @@ function AdminCentersPage() {
                   >
                     <td>{center.name}</td>
                     <td>{center.barangay ? `${center.barangay}, ${center.municipality}` : center.municipality}</td>
-                    <td>{center.current_occupancy} / {center.capacity}</td>
+                    <td>{center.current_occupancy} / {center.capacity}
+                      <span style={{ marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>
+                        <button type="button" className="btn-inline" style={{ padding: '0 0.4rem', minWidth: 'unset' }} onClick={() => handleOccupancy(center, -1)} aria-label="Decrease occupancy">−</button>
+                        <button type="button" className="btn-inline" style={{ padding: '0 0.4rem', minWidth: 'unset', marginLeft: '0.2rem' }} onClick={() => handleOccupancy(center, 1)} aria-label="Increase occupancy">+</button>
+                      </span>
+                    </td>
                     <td className="ac-facilities-cell">
                       {center.facilities?.length
                         ? center.facilities.slice(0, 3).join(', ') + (center.facilities.length > 3 ? ` +${center.facilities.length - 3}` : '')
@@ -385,6 +406,15 @@ function AdminCentersPage() {
                 ))}
               </tbody>
             </table>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem', alignItems: 'center' }}>
+              <button type="button" className="btn-inline" disabled={pageNum === 0} onClick={() => setPageNum((p) => p - 1)}>← Prev</button>
+              <span style={{ fontSize: '0.85rem' }}>Page {pageNum + 1} / {totalPages}</span>
+              <button type="button" className="btn-inline" disabled={pageNum >= totalPages - 1} onClick={() => setPageNum((p) => p + 1)}>Next →</button>
+            </div>
           )}
         </div>
       </div>

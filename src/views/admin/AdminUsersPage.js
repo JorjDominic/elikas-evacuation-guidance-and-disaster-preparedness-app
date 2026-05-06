@@ -4,10 +4,21 @@ import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminUsersPage.css';
 
+function exportCSV(data, filename) {
+  if (!data.length) return;
+  const headers = ['id', 'name', 'role', 'is_active', 'created_at'];
+  const rows = data.map((r) => headers.map((h) => JSON.stringify(r[h] ?? '')).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 const ROLE_OPTIONS = ['user', 'admin'];
 
 const EMPTY_INVITE = { name: '', email: '', role: 'user' };
-const EMPTY_EDIT = { name: '', role: 'user', is_active: true };
 
 function roleChip(role) {
   return (
@@ -266,9 +277,14 @@ function AdminUsersPage() {
 
         <div className="app-page-head">
           <span className="page-chip">Accounts</span>
-          <button type="button" className="aup-btn primary" onClick={() => setShowInvite(true)}>
-            + Invite User
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="button" className="aup-btn" onClick={() => exportCSV(filtered, 'users.csv')} disabled={filtered.length === 0}>
+              ⇓ Export CSV
+            </button>
+            <button type="button" className="aup-btn primary" onClick={() => setShowInvite(true)}>
+              + Invite User
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
