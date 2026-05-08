@@ -43,8 +43,8 @@ function SignUpPage() {
 
 				<form className="auth-card auth-form" onSubmit={handleSubmit}>
 					<h2>Create Account</h2>
-					{error   && <div className="sb-auth-error">{error}</div>}
-					{success && <div className="sb-auth-message">{success}</div>}
+					{error   && <div className="sb-auth-error" role="alert" aria-live="polite">{error}</div>}
+					{success && <div className="sb-auth-message" role="status" aria-live="polite">{success}</div>}
 
 					<label htmlFor="su-name">Full Name</label>
 					<input id="su-name" type="text" placeholder="Juan Dela Cruz"

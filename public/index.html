@@ -29,6 +29,16 @@
 
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>eLikas</title>
+    <!-- Prevent flash of wrong theme before React mounts -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('elikas-theme');
+        var theme = (saved === 'light' || saved === 'dark')
+          ? saved
+          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run eLikas.</noscript>

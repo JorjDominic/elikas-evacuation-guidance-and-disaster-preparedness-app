@@ -121,8 +121,8 @@ function ForgotPasswordPage({ onBackToLogin, onSubmitReset }) {
               Enter your email address and we'll send you a link to reset your password.
             </p>
 
-            {error && <div className="sb-auth-error">{error}</div>}
-            {message && <div className="sb-auth-message">{message}</div>}
+            {error && <div className="sb-auth-error" role="alert" aria-live="polite">{error}</div>}
+            {message && <div className="sb-auth-message" role="status" aria-live="polite">{message}</div>}
 
             <form className="sb-auth-form" onSubmit={submitReset}>
               <label htmlFor="sb-forgot-email">Email Address</label>

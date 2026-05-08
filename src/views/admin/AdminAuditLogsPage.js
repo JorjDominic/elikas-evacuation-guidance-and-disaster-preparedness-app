@@ -23,6 +23,29 @@ const ACTION_LABELS = {
 
 const PAGE_SIZE = 25;
 
+function csvCell(value) {
+  const str = value === null || value === undefined ? '' : String(value);
+  const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
+    return `"${safe.replace(/"/g, '""')}"`;
+  }
+  return safe;
+}
+
+function exportLogsCSV(logs) {
+  if (!logs.length) return;
+  const headers = ['created_at', 'actor_name', 'action', 'target_type', 'target_id'];
+  const rows = logs.map((l) => headers.map((h) => csvCell(l[h])).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function actionBadge(action) {
   const meta = ACTION_LABELS[action] || { label: action, color: 'grey' };
   return <span className={`aalp-badge color-${meta.color}`}>{meta.label}</span>;
@@ -100,6 +123,14 @@ function AdminAuditLogsPage() {
 
         <div className="app-page-head">
           <span className="page-chip">Activity Log</span>
+          <button
+            type="button"
+            className="aalp-btn ghost"
+            onClick={() => exportLogsCSV(logs)}
+            disabled={logs.length === 0}
+          >
+            Export CSV
+          </button>
         </div>
 
         {/* Filters */}

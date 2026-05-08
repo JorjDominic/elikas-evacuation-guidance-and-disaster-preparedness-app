@@ -122,7 +122,23 @@ function AppContent() {
     }
   };
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '50%',
+            border: '3px solid var(--primary, #1a3a5f)',
+            borderTopColor: 'transparent',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 1rem',
+          }} />
+          <p style={{ color: 'var(--text-secondary, #5a5850)', fontSize: '0.9rem' }}>Loading eLikas…</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   if (page === 'auth') {
     return (

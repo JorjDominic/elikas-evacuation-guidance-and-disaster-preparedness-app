@@ -27,6 +27,11 @@ export function useNotifications() {
 							body: alert.title || 'A new high-severity alert has been issued.',
 							icon: '/favicon.ico',
 						});
+					} else if (alert?.level === 'medium') {
+						new Notification('eLikas Advisory', {
+							body: alert.title || 'A new moderate-severity advisory has been issued.',
+							icon: '/favicon.ico',
+						});
 					}
 				}
 			)

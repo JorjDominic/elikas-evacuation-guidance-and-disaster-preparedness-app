@@ -197,8 +197,8 @@ function LoginPage({ onBack, onLogin, onRegister, onForgotPassword }) {
             >Sign-up</button>
           </div>
 
-          {error && <div className="sb-auth-error">{error}</div>}
-          {message && <div className="sb-auth-message">{message}</div>}
+          {error && <div className="sb-auth-error" role="alert" aria-live="polite">{error}</div>}
+          {message && <div className="sb-auth-message" role="status" aria-live="polite">{message}</div>}
 
           {activeTab === 'login' ? (
             <form className="sb-auth-form" onSubmit={submitLogin}>

@@ -4,10 +4,20 @@ import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminUsersPage.css';
 
+function csvCell(value) {
+  const str = value === null || value === undefined ? '' : String(value);
+  // Prefix formula characters to prevent CSV injection
+  const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
+    return `"${safe.replace(/"/g, '""')}"`;
+  }
+  return safe;
+}
+
 function exportCSV(data, filename) {
   if (!data.length) return;
   const headers = ['id', 'name', 'role', 'is_active', 'created_at'];
-  const rows = data.map((r) => headers.map((h) => JSON.stringify(r[h] ?? '')).join(','));
+  const rows = data.map((r) => headers.map((h) => csvCell(r[h])).join(','));
   const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);

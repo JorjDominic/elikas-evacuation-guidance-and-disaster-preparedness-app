@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 
 const STATUS_CLASS = { pending: 'warning', approved: 'open', rejected: 'danger' };
+const PAGE_SIZE = 10;
 
 function MyReportsPage() {
   const { currentUser } = useAuth();
@@ -11,6 +12,8 @@ function MyReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [pageNum, setPageNum] = useState(0);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     async function fetchMyReports() {
@@ -41,12 +44,42 @@ function MyReportsPage() {
           );
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'hazard_reports', filter: `reporter_id=eq.${currentUser.id}` },
+        (payload) => {
+          setReports((prev) => prev.filter((r) => r.id !== payload.old.id));
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
 
+  const handleDelete = async (reportId) => {
+    if (!window.confirm('Cancel and delete this pending report?')) return;
+    setDeletingId(reportId);
+    const { error: err } = await supabase
+      .from('hazard_reports')
+      .delete()
+      .eq('id', reportId)
+      .eq('reporter_id', currentUser.id)
+      .eq('status', 'pending');
+    setDeletingId(null);
+    if (err) {
+      setError('Failed to delete report: ' + err.message);
+    } else {
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+    }
+  };
+
   const filtered =
     statusFilter === 'all' ? reports : reports.filter((r) => r.status === statusFilter);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE);
+
+  // Reset page when filter changes
+  const handleFilterChange = (s) => { setStatusFilter(s); setPageNum(0); };
 
   const counts = {
     all: reports.length,
@@ -78,7 +111,7 @@ function MyReportsPage() {
               key={s}
               type="button"
               className={`btn-inline ${statusFilter === s ? 'primary' : ''}`}
-              onClick={() => setStatusFilter(s)}
+              onClick={() => handleFilterChange(s)}
               style={{ textTransform: 'capitalize' }}
             >
               {s === 'all' ? 'All' : s} ({counts[s]})
@@ -86,7 +119,7 @@ function MyReportsPage() {
           ))}
         </div>
 
-        {error && <p style={{ color: 'var(--color-danger, red)' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--color-danger, red)' }} role="alert" aria-live="polite">{error}</p>}
         {loading && <p>Loading your reports…</p>}
 
         {!loading && filtered.length === 0 && (
@@ -110,10 +143,11 @@ function MyReportsPage() {
                   <th>Description</th>
                   <th>Submitted</th>
                   <th>Status</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => (
+                {paginated.map((r) => (
                   <tr key={r.id}>
                     <td>{r.hazard_type}</td>
                     <td>{r.location}</td>
@@ -141,10 +175,43 @@ function MyReportsPage() {
                         {r.status}
                       </span>
                     </td>
+                    <td>
+                      {r.status === 'pending' && (
+                        <button
+                          type="button"
+                          className="btn-inline danger"
+                          disabled={deletingId === r.id}
+                          onClick={() => handleDelete(r.id)}
+                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem' }}
+                        >
+                          {deletingId === r.id ? '…' : 'Delete'}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end', padding: '0.75rem 1rem', borderTop: '1px solid var(--border-color)' }}>
+                <button
+                  type="button"
+                  className="btn-inline"
+                  disabled={pageNum === 0}
+                  onClick={() => setPageNum((p) => p - 1)}
+                >← Prev</button>
+                <span style={{ fontSize: '0.88rem', color: 'var(--sent-text-muted)' }}>
+                  {pageNum + 1} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="btn-inline"
+                  disabled={pageNum >= totalPages - 1}
+                  onClick={() => setPageNum((p) => p + 1)}
+                >Next →</button>
+              </div>
+            )}
           </div>
         )}
       </div>

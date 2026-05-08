@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
@@ -13,6 +13,12 @@ import '../../utils/leafletIcons';
 const BULACAN_CENTER = [14.7942, 120.8793];
 const RATE_LIMIT_MS = 2 * 60 * 1000; // 2-minute cooldown between submissions
 const RATE_KEY = 'elikas_last_hazard_report';
+const MAX_PHOTO_MB = 5;
+
+// Strip HTML tags and angle brackets to prevent stored XSS
+function sanitizeText(str) {
+	return str.replace(/[<>"]/g, '').trim();
+}
 
 // ── Click anywhere on the map to place a pin ─────────────────────
 function ClickToPin({ onPin }) {
@@ -120,6 +126,11 @@ function HazardReportPage() {
 		// Upload photo if one was selected
 		let photo_url = null;
 		if (photoFile) {
+			if (photoFile.size > MAX_PHOTO_MB * 1024 * 1024) {
+				setLoading(false);
+				setError(`Photo must be smaller than ${MAX_PHOTO_MB} MB.`);
+				return;
+			}
 			const ext = photoFile.name.split('.').pop();
 			const path = `${user?.id ?? 'anon'}/${Date.now()}.${ext}`;
 			const { data: uploadData, error: uploadErr } = await supabase.storage
@@ -136,10 +147,10 @@ function HazardReportPage() {
 
 		const { error: err } = await supabase.from('hazard_reports').insert([{
 			hazard_type:   form.hazard_type,
-			location:      form.location.trim(),
+			location:      sanitizeText(form.location),
 			latitude:      pin?.lat ?? null,
 			longitude:     pin?.lon ?? null,
-			description:   form.description.trim(),
+			description:   sanitizeText(form.description),
 			status:        'pending',
 			reporter_id:   user?.id ?? null,
 			reporter_name: currentUser?.name ?? user?.email ?? null,
@@ -171,8 +182,8 @@ function HazardReportPage() {
 				<h2 className="section-title">Incident Submission</h2>
 				<div className="panel-grid">
 					<form className="card" style={{ gridColumn: 'span 7', display: 'grid', gap: '0.45rem' }} onSubmit={handleSubmit}>
-						{error   && <div className="sb-auth-error">{error}</div>}
-						{success && <div className="sb-auth-message">{success}</div>}
+{error   && <div className="sb-auth-error" role="alert" aria-live="polite">{error}</div>}
+					{success && <div className="sb-auth-message" role="status" aria-live="polite">{success}</div>}
 
 						<label>Hazard Type</label>
 						<select value={form.hazard_type} onChange={(e) => handleChange('hazard_type', e.target.value)}>
@@ -232,11 +243,21 @@ function HazardReportPage() {
 							onChange={(e) => handleChange('description', e.target.value)}
 						/>
 
-						<label>Photo (optional)</label>
+						<label>Photo (optional, max {MAX_PHOTO_MB} MB)</label>
 						<input
 							type="file"
 							accept="image/*"
-							onChange={(e) => setPhotoFile(e.target.files[0] || null)}
+							onChange={(e) => {
+								const file = e.target.files[0] || null;
+								if (file && file.size > MAX_PHOTO_MB * 1024 * 1024) {
+									setError(`Photo must be smaller than ${MAX_PHOTO_MB} MB.`);
+									e.target.value = '';
+									setPhotoFile(null);
+								} else {
+									setError('');
+									setPhotoFile(file);
+								}
+							}}
 						/>
 						{photoFile && (
 							<p style={{ fontSize: '0.82rem', color: 'var(--sent-text-muted)' }}>

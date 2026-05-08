@@ -12,6 +12,13 @@ function ProfilePage() {
 	const [success, setSuccess] = useState('');
 	const [error, setError] = useState('');
 
+	// Change-password state
+	const [newPassword, setNewPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const [pwSaving, setPwSaving] = useState(false);
+	const [pwSuccess, setPwSuccess] = useState('');
+	const [pwError, setPwError] = useState('');
+
 	useEffect(() => {
 		if (!currentUser?.id) return;
 		supabase
@@ -46,6 +53,25 @@ function ProfilePage() {
 			setError('Failed to save profile.');
 		} else {
 			setSuccess('Profile updated successfully.');
+		}
+	};
+
+	const handleChangePassword = async (e) => {
+		e.preventDefault();
+		setPwError('');
+		setPwSuccess('');
+		if (!newPassword) { setPwError('New password is required.'); return; }
+		if (newPassword.length < 8) { setPwError('Password must be at least 8 characters.'); return; }
+		if (newPassword !== confirmPassword) { setPwError('Passwords do not match.'); return; }
+		setPwSaving(true);
+		const { error: err } = await supabase.auth.updateUser({ password: newPassword });
+		setPwSaving(false);
+		if (err) {
+			setPwError(err.message || 'Failed to update password.');
+		} else {
+			setPwSuccess('Password changed successfully.');
+			setNewPassword('');
+			setConfirmPassword('');
 		}
 	};
 
@@ -89,11 +115,48 @@ function ProfilePage() {
 								<span className={`status-pill ${role}`} style={{ display: 'inline-block', textTransform: 'capitalize' }}>{role || '—'}</span>
 							</div>
 
-							{error && <p className="form-error">{error}</p>}
-							{success && <p style={{ color: 'var(--color-success, #16a34a)', fontSize: '0.9rem' }}>{success}</p>}
+							{error && <p className="form-error" role="alert" aria-live="polite">{error}</p>}
+							{success && <p style={{ color: 'var(--color-success, #16a34a)', fontSize: '0.9rem' }} role="status" aria-live="polite">{success}</p>}
 
 							<button type="submit" className="btn-primary" disabled={saving}>
 								{saving ? 'Saving…' : 'Save Changes'}
+							</button>
+						</form>
+
+						<hr style={{ margin: '1.5rem 0', borderColor: 'var(--border-color)' }} />
+
+						<form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+							<h3 style={{ margin: 0 }}>Change Password</h3>
+
+							<div className="form-group">
+								<label htmlFor="new-password">New Password</label>
+								<input
+									id="new-password"
+									type="password"
+									value={newPassword}
+									onChange={(e) => setNewPassword(e.target.value)}
+									minLength={8}
+									autoComplete="new-password"
+								/>
+							</div>
+
+							<div className="form-group">
+								<label htmlFor="confirm-password">Confirm New Password</label>
+								<input
+									id="confirm-password"
+									type="password"
+									value={confirmPassword}
+									onChange={(e) => setConfirmPassword(e.target.value)}
+									minLength={8}
+									autoComplete="new-password"
+								/>
+							</div>
+
+							{pwError && <p className="form-error" role="alert" aria-live="polite">{pwError}</p>}
+							{pwSuccess && <p style={{ color: 'var(--color-success, #16a34a)', fontSize: '0.9rem' }} role="status" aria-live="polite">{pwSuccess}</p>}
+
+							<button type="submit" className="btn-primary" disabled={pwSaving}>
+								{pwSaving ? 'Updating…' : 'Change Password'}
 							</button>
 						</form>
 					</div>
