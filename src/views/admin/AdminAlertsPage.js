@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
@@ -26,7 +26,7 @@ function GpsLocator({ onPin }) {
 		map.once('locationfound', (e) => { onPin(e.latlng.lat, e.latlng.lng); setStatus('found'); });
 		map.once('locationerror', () => { setStatus('error'); setTimeout(() => setStatus('idle'), 3000); });
 	};
-	const labels = { idle: 'Use GPS', locating: 'Locatingâ€¦', found: 'Located', error: 'GPS Denied' };
+	const labels = { idle: 'Use GPS', locating: 'Locating…', found: 'Located', error: 'GPS Denied' };
 	return (
 		<div className="leaflet-top leaflet-right" style={{ pointerEvents: 'none' }}>
 			<div className="leaflet-control" style={{ pointerEvents: 'auto', marginTop: '0.5rem', marginRight: '0.5rem' }}>
@@ -107,7 +107,7 @@ function AlertModal({ initial, onSave, onClose }) {
 
 					<fieldset style={{ border: '1px solid var(--border, #e5e7eb)', borderRadius: '0.5rem', padding: '0.75rem 1rem 1rem', marginTop: '0.5rem' }}>
 						<legend style={{ fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 0.4rem', color: 'var(--text-muted, #666)' }}>
-							Location (optional) â€” tap map or enter coordinates
+							Location (optional) — tap map or enter coordinates
 						</legend>
 						<div className="ac-field-row">
 							<label>Latitude
@@ -135,13 +135,13 @@ function AlertModal({ initial, onSave, onClose }) {
 						</MapContainer>
 						{pinPos && (
 							<p className="ac-coords-hint">
-								Pinned: {Number(form.latitude).toFixed(5)}Â°N, {Number(form.longitude).toFixed(5)}Â°E
+								Pinned: {Number(form.latitude).toFixed(5)}°N, {Number(form.longitude).toFixed(5)}°E
 								<button
 									type="button"
 									className="ac-clear-pin"
 									onClick={() => setForm((f) => ({ ...f, latitude: '', longitude: '' }))}
 								>
-									âœ• Clear pin
+									✕ Clear pin
 								</button>
 							</p>
 						)}
@@ -150,7 +150,7 @@ function AlertModal({ initial, onSave, onClose }) {
 					<div className="ac-modal-actions">
 						<button type="button" className="btn-inline" onClick={onClose} disabled={saving}>Cancel</button>
 						<button type="submit" className="btn-inline primary" disabled={saving}>
-							{saving ? 'Savingâ€¦' : 'Save Alert'}
+							{saving ? 'Saving…' : 'Save Alert'}
 						</button>
 					</div>
 				</form>
@@ -168,6 +168,8 @@ function AdminAlertsPage() {
 	const [deleteTarget, setDeleteTarget] = useState(null);
 	const [deleting, setDeleting] = useState(false);
 	const [flyTo, setFlyTo] = useState(null);
+	const [search, setSearch] = useState('');
+	const [levelFilter, setLevelFilter] = useState('all');
 
 	const fetchAlerts = useCallback(async () => {
 		setLoading(true);
@@ -208,7 +210,15 @@ function AdminAlertsPage() {
 		setDeleteTarget(null);
 	};
 
-	const mappable = alerts.filter((a) => a.latitude != null && a.longitude != null);
+	const filteredAlerts = alerts.filter((a) => {
+		const matchLevel = levelFilter === 'all' || a.level === levelFilter;
+		const matchSearch = !search ||
+			(a.title || '').toLowerCase().includes(search.toLowerCase()) ||
+			(a.area  || '').toLowerCase().includes(search.toLowerCase());
+		return matchLevel && matchSearch;
+	});
+
+	const mappable = filteredAlerts.filter((a) => a.latitude != null && a.longitude != null);
 
 	return (
 		<section className="app-page">
@@ -227,8 +237,31 @@ function AdminAlertsPage() {
 					<button type="button" className="btn-inline primary" onClick={() => setModal({ mode: 'add' })}>+ Create Alert</button>
 				</div>
 
+				{/* Search & filter bar */}
+				<div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.85rem', alignItems: 'center' }}>
+					<input
+						type="search"
+						placeholder="Search by title or area…"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						style={{ padding: '0.45rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border-color, #ddd)', fontSize: '0.9rem', flex: '1 1 180px' }}
+						aria-label="Search alerts"
+					/>
+					{['all', 'high', 'medium', 'low'].map((lvl) => (
+						<button
+							key={lvl}
+							type="button"
+							className={`btn-inline ${levelFilter === lvl ? 'primary' : ''}`}
+							onClick={() => setLevelFilter(lvl)}
+							style={{ textTransform: 'capitalize' }}
+						>
+							{lvl === 'all' ? 'All' : lvl}
+						</button>
+					))}
+				</div>
+
 				{error && <p style={{ color: 'var(--color-danger, red)', marginBottom: '0.75rem' }}>{error}</p>}
-				{loading && <p>Loading alertsâ€¦</p>}
+				{loading && <p>Loading alerts…</p>}
 
 				{!loading && mappable.length > 0 && (
 					<div className="card" style={{ marginBottom: '1.1rem', padding: '0' }}>
@@ -258,10 +291,10 @@ function AdminAlertsPage() {
 
 				{!loading && (
 					<div className="soft-grid">
-						{alerts.length === 0 ? (
-							<p>No alerts found. Create one above.</p>
+						{filteredAlerts.length === 0 ? (
+							<p>{alerts.length === 0 ? 'No alerts found. Create one above.' : 'No alerts match your filters.'}</p>
 						) : (
-							alerts.map((alert) => (
+							filteredAlerts.map((alert) => (
 								<div key={alert.id} className="soft-card">
 									<h3>{alert.title}</h3>
 									<p><strong>Severity:</strong> <span className={`status-pill ${alert.level}`}>{alert.level}</span></p>
@@ -321,7 +354,7 @@ function AdminAlertsPage() {
 							<div className="ac-modal-actions">
 								<button type="button" className="btn-inline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button>
 								<button type="button" className="btn-inline danger" onClick={handleDelete} disabled={deleting}>
-									{deleting ? 'Deletingâ€¦' : 'Delete'}
+									{deleting ? 'Deleting…' : 'Delete'}
 								</button>
 							</div>
 						</div>

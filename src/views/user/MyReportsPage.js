@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { writeAuditLog } from '../../services/adminService';
 import '../../styles/shared/sentinel.css';
 
 const STATUS_CLASS = { pending: 'warning', approved: 'open', rejected: 'danger' };
@@ -14,6 +15,7 @@ function MyReportsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [pageNum, setPageNum] = useState(0);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   useEffect(() => {
     async function fetchMyReports() {
@@ -56,7 +58,6 @@ function MyReportsPage() {
   }, [currentUser]);
 
   const handleDelete = async (reportId) => {
-    if (!window.confirm('Cancel and delete this pending report?')) return;
     setDeletingId(reportId);
     const { error: err } = await supabase
       .from('hazard_reports')
@@ -65,10 +66,19 @@ function MyReportsPage() {
       .eq('reporter_id', currentUser.id)
       .eq('status', 'pending');
     setDeletingId(null);
+    setConfirmDeleteId(null);
     if (err) {
       setError('Failed to delete report: ' + err.message);
     } else {
       setReports((prev) => prev.filter((r) => r.id !== reportId));
+      await writeAuditLog({
+        actorId: currentUser?.id,
+        actorName: currentUser?.name || currentUser?.email,
+        action: 'report.delete',
+        targetType: 'hazard_report',
+        targetId: reportId,
+        meta: { deletedBy: 'reporter' },
+      });
     }
   };
 
@@ -89,6 +99,7 @@ function MyReportsPage() {
   };
 
   return (
+    <>
     <section className="app-page">
       <div className="app-shell">
         <div className="page-hero">
@@ -120,7 +131,11 @@ function MyReportsPage() {
         </div>
 
         {error && <p style={{ color: 'var(--color-danger, red)' }} role="alert" aria-live="polite">{error}</p>}
-        {loading && <p>Loading your reports…</p>}
+        {loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {[1, 2, 3].map((i) => <div key={i} className="skeleton skeleton-row" style={{ opacity: 1 - i * 0.15 }} />)}
+          </div>
+        )}
 
         {!loading && filtered.length === 0 && (
           <div className="info-strip ok">
@@ -181,7 +196,7 @@ function MyReportsPage() {
                           type="button"
                           className="btn-inline danger"
                           disabled={deletingId === r.id}
-                          onClick={() => handleDelete(r.id)}
+                          onClick={() => setConfirmDeleteId(r.id)}
                           style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem' }}
                         >
                           {deletingId === r.id ? '…' : 'Delete'}
@@ -216,6 +231,37 @@ function MyReportsPage() {
         )}
       </div>
     </section>
+
+    {confirmDeleteId && (
+      <div
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        onClick={() => setConfirmDeleteId(null)}
+        role="alertdialog"
+        aria-modal="true"
+      >
+        <div
+          style={{ background: 'var(--sent-surface-card, #fff)', borderRadius: '0.75rem', padding: '1.5rem', maxWidth: '360px', width: '92vw', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 style={{ margin: '0 0 0.5rem' }}>Delete this report?</h3>
+          <p style={{ margin: '0 0 1.25rem', fontSize: '0.9rem', color: 'var(--sent-text-muted)' }}>
+            This will permanently remove the pending hazard report and cannot be undone.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button type="button" className="btn-inline" onClick={() => setConfirmDeleteId(null)} disabled={!!deletingId}>Cancel</button>
+            <button
+              type="button"
+              className="btn-inline danger"
+              disabled={!!deletingId}
+              onClick={() => handleDelete(confirmDeleteId)}
+            >
+              {deletingId ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

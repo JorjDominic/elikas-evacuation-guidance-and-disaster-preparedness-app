@@ -2,13 +2,43 @@ import React, { Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppTopNav from './views/AppTopNav';
 import ThemeToggleButton from './views/ThemeToggleButton';
-
-// ── Eagerly loaded (tiny, needed on first paint) ─────────────────────────────
 import LandingPage from './views';
 import LoginPage from './views/LoginPage';
 import ForgotPasswordPage from './views/ForgotPasswordPage';
 import SignUpPage from './views/SignUpPage';
 import ResetPasswordPage from './views/ResetPasswordPage';
+
+// ── Error Boundary ────────────────────────────────────────────────────────────
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+          <span style={{ fontSize: '2rem' }}>⚠️</span>
+          <h2 style={{ margin: 0 }}>Something went wrong</h2>
+          <p style={{ color: 'var(--sent-text-muted, #5a5850)', maxWidth: '400px' }}>
+            {this.state.error?.message || 'An unexpected error occurred on this page.'}
+          </p>
+          <button
+            type="button"
+            className="btn-inline primary"
+            onClick={() => this.setState({ hasError: false, error: null })}
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ── Lazy-loaded (loaded only when the user navigates there) ──────────────────
 const DashboardPage      = React.lazy(() => import('./views/user/DashboardPage'));
@@ -194,11 +224,13 @@ function AppContent() {
         onNavigate={setPage}
         onLogout={handleLogout}
       />
+      <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <div key={page}>
           {renderPage()}
         </div>
       </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }

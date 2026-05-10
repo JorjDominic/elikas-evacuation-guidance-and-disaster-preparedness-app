@@ -20,7 +20,15 @@ export function useGuides() {
     fetchGuides();
     const channel = supabase
       .channel('guides-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'guides' }, fetchGuides)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'guides' }, (payload) => {
+        setGuides((prev) => [payload.new, ...prev]);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'guides' }, (payload) => {
+        setGuides((prev) => prev.map((g) => (g.id === payload.new.id ? payload.new : g)));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'guides' }, (payload) => {
+        setGuides((prev) => prev.filter((g) => g.id !== payload.old.id));
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchGuides]);

@@ -20,7 +20,15 @@ export function useAlerts() {
     fetchAlerts();
     const channel = supabase
       .channel('alerts-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, fetchAlerts)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
+        setAlerts((prev) => [payload.new, ...prev]);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alerts' }, (payload) => {
+        setAlerts((prev) => prev.map((a) => (a.id === payload.new.id ? payload.new : a)));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'alerts' }, (payload) => {
+        setAlerts((prev) => prev.filter((a) => a.id !== payload.old.id));
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchAlerts]);

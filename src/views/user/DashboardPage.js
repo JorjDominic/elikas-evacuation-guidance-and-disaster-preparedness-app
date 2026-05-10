@@ -18,6 +18,14 @@ function DashboardPage() {
 	const topAlert = recentAlerts.find((a) => a.level === 'high') || recentAlerts[0] || null;
 	const loading = alertsLoading || statsLoading;
 
+	// Derive status pills from live data
+	const watchMode = topAlert
+		? topAlert.level === 'high' ? 'Red Alert' : topAlert.level === 'medium' ? 'Yellow Alert' : 'Advisory'
+		: 'Normal Conditions';
+	const responseTier = topAlert
+		? topAlert.level === 'high' ? 'Response Tier: Emergency' : topAlert.level === 'medium' ? 'Response Tier: Elevated' : 'Response Tier: Advisory'
+		: 'Response Tier: Routine';
+
 	useEffect(() => {
 		if (!alertsLoading) setSyncedAt(new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }));
 	}, [alertsLoading]);
@@ -47,9 +55,9 @@ function DashboardPage() {
 					<h1>Community Dashboard</h1>
 					<p>Welcome back, {user?.name || 'Resident'}. This board summarizes live conditions, shelter readiness, and the next best actions for your household.</p>
 					<div className="hero-meta">
-						<span className="hero-pill">Bulacan Watch Mode</span>
+						<span className="hero-pill">{watchMode}</span>
 						{syncedAt && <span className="hero-pill">Data Synced {syncedAt}</span>}
-						<span className="hero-pill">Response Tier: Advisory</span>
+						<span className="hero-pill">{responseTier}</span>
 					</div>
 				</div>
 
@@ -77,7 +85,11 @@ function DashboardPage() {
 				<div className="panel-grid">
 					<div className="card" style={{ gridColumn: 'span 7' }}>
 						<h2>Recent Alerts</h2>
-						{loading && <p>Loading…</p>}
+						{loading && (
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+							{[1, 2, 3].map((i) => <div key={i} className="skeleton skeleton-row" style={{ opacity: 1 - i * 0.15 }} />)}
+						</div>
+					)}
 						{!loading && recentAlerts.length === 0 && (
 							<div className="info-strip ok" style={{ marginTop: '0.5rem' }}>
 								<span>✅</span>

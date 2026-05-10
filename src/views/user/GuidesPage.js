@@ -39,7 +39,11 @@ function GuidesPage() {
 					</div>
 				</div>
 
-				{loading && <p>Loading guides…</p>}
+				{loading && (
+					<div className="skeleton-grid">
+						{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton skeleton-card" />)}
+					</div>
+				)}
 				{error && <p style={{ color: 'var(--color-danger, red)' }}>{error}</p>}
 
 				{/* Search */}

@@ -233,6 +233,7 @@ function AdminCentersPage() {
   const [highlighted, setHighlighted] = useState(null);
   const [flyTo, setFlyTo] = useState(null);
   const [pageNum, setPageNum] = useState(0);
+  const [search, setSearch] = useState('');
   const rowRefs = useRef({});
 
   const fetchCenters = useCallback(async () => {
@@ -295,8 +296,15 @@ function AdminCentersPage() {
   };
 
   const mappable = centers.filter((c) => c.latitude != null && c.longitude != null);
-  const totalPages = Math.ceil(centers.length / PAGE_SIZE);
-  const pageCenters = centers.slice(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE);
+  const filteredCenters = search
+    ? centers.filter((c) =>
+        (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.municipality || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.barangay || '').toLowerCase().includes(search.toLowerCase())
+      )
+    : centers;
+  const totalPages = Math.ceil(filteredCenters.length / PAGE_SIZE);
+  const pageCenters = filteredCenters.slice(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE);
 
   return (
     <section className="app-page">
@@ -358,10 +366,23 @@ function AdminCentersPage() {
         )}
 
         <div className="table-shell card">
+          {/* Search bar */}
+          <div style={{ marginBottom: '0.75rem' }}>
+            <input
+              type="search"
+              placeholder="Search by name, municipality, or barangay…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPageNum(0); }}
+              style={{ padding: '0.45rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border-color, #ddd)', fontSize: '0.9rem', width: '100%', maxWidth: '380px' }}
+              aria-label="Search centers"
+            />
+          </div>
           {loading ? (
             <p className="ac-loading">Loading centers…</p>
           ) : centers.length === 0 ? (
             <p className="ac-loading">No centers yet. Add one to get started.</p>
+          ) : filteredCenters.length === 0 ? (
+            <p className="ac-loading">No centers match your search.</p>
           ) : (
             <table>
               <thead>

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../config/supabase';
 
 function ProfilePage() {
-	const { currentUser } = useAuth();
+	const { currentUser, setCurrentUser } = useAuth();
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [role, setRole] = useState('');
@@ -53,6 +53,7 @@ function ProfilePage() {
 			setError('Failed to save profile.');
 		} else {
 			setSuccess('Profile updated successfully.');
+			setCurrentUser((prev) => ({ ...prev, name: name.trim() }));
 		}
 	};
 

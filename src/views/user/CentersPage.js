@@ -36,14 +36,20 @@ function FlyTo({ position }) {
 	return null;
 }
 
+const PAGE_SIZE = 12;
+
 function CentersPage({ onSelectCenter }) {
 	const { centers, loading, error } = useCenters();
 	const [highlighted, setHighlighted] = useState(null);
 	const [flyTo, setFlyTo] = useState(null);
 	const cardRefs = useRef({});
 	const [statusFilter, setStatusFilter] = useState('all');
+	const [pageNum, setPageNum] = useState(0);
 
 	// "Near me" filter state
+	// Reset page when filters change
+	const handleStatusFilter = (s) => { setStatusFilter(s); setPageNum(0); };
+
 	const [nearMode, setNearMode] = useState(false);
 	const [userCoords, setUserCoords] = useState(null);
 	const [gpsStatus, setGpsStatus] = useState('idle'); // idle | locating | error
@@ -121,6 +127,9 @@ function CentersPage({ onSelectCenter }) {
 			: sorted.slice(0, NEAR_MIN_RESULTS);
 	}, [centers, userCoords, nearMode, statusFilter]);
 
+	const totalPages = Math.ceil(displayedCenters.length / PAGE_SIZE);
+	const pagedCenters = displayedCenters.slice(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE);
+
 	const mappable = displayedCenters.filter((c) => c.latitude != null && c.longitude != null);
 
 	const nearBtnLabel =
@@ -147,7 +156,11 @@ function CentersPage({ onSelectCenter }) {
 					</div>
 				</div>
 
-				{loading && <p>Loading centers…</p>}
+				{loading && (
+					<div className="skeleton-grid">
+						{[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton skeleton-card" />)}
+					</div>
+				)}
 				{error && <p style={{ color: 'var(--sent-danger)' }}>{error}</p>}
 
 				{!loading && !error && centers.length === 0 && (
@@ -167,7 +180,7 @@ function CentersPage({ onSelectCenter }) {
 										key={s}
 										type="button"
 										className={`btn-inline ${statusFilter === s ? 'primary' : ''}`}
-										onClick={() => setStatusFilter(s)}
+										onClick={() => handleStatusFilter(s)}
 										style={{ textTransform: 'capitalize' }}
 									>
 										{s === 'all' ? 'All' : s}
@@ -238,7 +251,7 @@ function CentersPage({ onSelectCenter }) {
 							</p>
 						) : (
 							<div className="soft-grid">
-								{displayedCenters.map((center) => {
+							{pagedCenters.map((center) => {
 									const pct = occupancyPercent(center);
 									return (
 										<div
@@ -290,6 +303,15 @@ function CentersPage({ onSelectCenter }) {
 										</div>
 									);
 								})}
+							</div>
+						)}
+
+						{/* Pagination */}
+						{totalPages > 1 && (
+							<div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "1.25rem", flexWrap: "wrap", alignItems: "center" }}>
+								<button type="button" className="btn-inline" onClick={() => setPageNum((p) => p - 1)} disabled={pageNum === 0}>← Prev</button>
+								<span style={{ fontSize: "0.88rem", color: "var(--sent-text-muted)" }}>Page {pageNum + 1} of {totalPages}</span>
+								<button type="button" className="btn-inline" onClick={() => setPageNum((p) => p + 1)} disabled={pageNum >= totalPages - 1}>Next →</button>
 							</div>
 						)}
 					</>

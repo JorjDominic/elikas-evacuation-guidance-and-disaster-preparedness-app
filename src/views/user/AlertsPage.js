@@ -72,7 +72,11 @@ function AlertsPage() {
 					))}
 				</div>
 
-				{loading && <p>Loading alerts…</p>}
+				{loading && (
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+						{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton skeleton-row" style={{ opacity: 1 - i * 0.1 }} />)}
+					</div>
+				)}
 				{error && <p style={{ color: 'var(--color-danger, red)' }}>{error}</p>}
 				{!loading && !error && filtered.length === 0 && (
 					<p>No alerts match your filters.</p>

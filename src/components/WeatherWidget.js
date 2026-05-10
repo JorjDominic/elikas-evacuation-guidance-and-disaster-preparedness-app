@@ -153,6 +153,9 @@ function WeatherWidget({ compact = false }) {
           <span className="material-symbols-outlined ww-loc-icon" aria-hidden="true">location_on</span>
           <span>{locationLabel}</span>
           {gpsState === 'granted' && <span className="ww-gps-badge" title="Using your GPS location">GPS</span>}
+          {(gpsState === 'denied' || gpsState === 'unsupported') && (
+            <span className="ww-gps-badge" style={{ background: 'var(--sent-warning-soft, #fef3c7)', color: 'var(--sent-warning, #92400e)', border: '1px solid var(--sent-warning, #fbbf24)', marginLeft: '0.25rem' }} title="Showing default location weather — GPS not available">Default</span>
+          )}
           {gpsState === 'denied' && (
             <button type="button" className="ww-gps-request" onClick={requestLocation} title="Enable GPS for local forecast">
               Enable GPS
