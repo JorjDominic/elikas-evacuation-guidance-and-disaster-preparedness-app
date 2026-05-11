@@ -1,6 +1,8 @@
 import React, { Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useNotifications } from './hooks/useNotifications';
 import AppTopNav from './views/AppTopNav';
+import ToastContainer from './components/ToastContainer';
 import ThemeToggleButton from './views/ThemeToggleButton';
 import LandingPage from './views';
 import LoginPage from './views/LoginPage';
@@ -56,6 +58,7 @@ const AdminGuidesPage    = React.lazy(() => import('./views/admin/AdminGuidesPag
 const AdminReportsPage   = React.lazy(() => import('./views/admin/AdminReportsPage'));
 const AdminUsersPage     = React.lazy(() => import('./views/admin/AdminUsersPage'));
 const AdminAuditLogsPage = React.lazy(() => import('./views/admin/AdminAuditLogsPage'));
+const AdminTestPage       = React.lazy(() => import('./views/admin/AdminTestPage'));
 
 // ── Fallback shown while lazy chunks load ────────────────────────────────────
 function PageLoader() {
@@ -101,6 +104,9 @@ function AppContent() {
     setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
   };
 
+  // Always-on notification listener — active on every page for logged-in users
+  useNotifications();
+
   const userNavItems = [
     { key: 'dashboard',     label: 'Dashboard'     },
     { key: 'centers',       label: 'Centers'        },
@@ -119,6 +125,7 @@ function AppContent() {
     { key: 'admin-reports',    label: 'Reports'    },
     { key: 'admin-users',      label: 'Users'      },
     { key: 'admin-audit-logs', label: 'Audit Logs' },
+    { key: 'admin-test',       label: 'Test Console' },
   ];
 
   const isAdmin = currentUser?.role === 'admin';
@@ -146,6 +153,7 @@ function AppContent() {
       case 'admin-reports':  return <AdminReportsPage />;
       case 'admin-users':    return <AdminUsersPage />;
       case 'admin-audit-logs': return <AdminAuditLogsPage />;
+      case 'admin-test':       return <AdminTestPage />;
       case 'reset-password': return <ResetPasswordPage onDone={() => setPage('landing')} />;
       case 'signup':         return <SignUpPage />;
       default:               return <div style={{ padding: '2rem', textAlign: 'center' }}><h2>Page not found.</h2></div>;
@@ -224,6 +232,7 @@ function AppContent() {
         onNavigate={setPage}
         onLogout={handleLogout}
       />
+      <ToastContainer />
       <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <div key={page}>

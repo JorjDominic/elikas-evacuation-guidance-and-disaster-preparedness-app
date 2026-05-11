@@ -1,0 +1,249 @@
+/* ── Admin Test Page ───────────────────────────────────────── */
+
+.atp-page {
+  min-height: 100vh;
+  padding: 5.5rem 1rem 3rem;
+  background: var(--sent-surface, #faf6ee);
+  font-family: 'Public Sans', sans-serif;
+}
+
+.atp-wrap {
+  width: min(900px, 94%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.atp-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sent-line);
+}
+
+.atp-header h1 {
+  margin: 0 0 0.25rem;
+  font-family: 'Newsreader', serif;
+  font-size: 1.9rem;
+  color: var(--sent-text);
+}
+
+.atp-header p {
+  margin: 0;
+  color: var(--sent-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Section cards */
+.atp-section {
+  background: var(--sent-surface-card);
+  border: 1px solid var(--sent-line);
+  border-radius: var(--sent-radius);
+  padding: 1.5rem 1.8rem;
+  box-shadow: var(--sent-shadow);
+  animation: sentinelFadeUp 0.3s ease both;
+}
+
+.atp-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.35rem;
+  font-family: 'Newsreader', serif;
+  font-size: 1.25rem;
+  color: var(--sent-text);
+}
+
+.atp-section-title .atp-icon {
+  font-size: 1.3rem;
+}
+
+.atp-section-desc {
+  font-size: 0.85rem;
+  color: var(--sent-text-muted);
+  margin: 0 0 1.2rem;
+}
+
+/* Permission status badge */
+.atp-permission-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.atp-permission-badge.granted { background: #dcfce7; color: #166534; }
+.atp-permission-badge.denied  { background: #fee2e2; color: #991b1b; }
+.atp-permission-badge.default { background: #fef3c7; color: #92400e; }
+
+:root[data-theme='dark'] .atp-permission-badge.granted { background: #052e16; color: #6ee7b7; }
+:root[data-theme='dark'] .atp-permission-badge.denied  { background: #450a0a; color: #fca5a5; }
+:root[data-theme='dark'] .atp-permission-badge.default { background: #451a03; color: #fcd34d; }
+
+/* Action rows */
+.atp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* Buttons */
+.atp-btn {
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Public Sans', sans-serif;
+  border: 1px solid transparent;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.atp-btn:hover  { transform: translateY(-1px); }
+.atp-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.atp-btn.primary { background: var(--sent-primary); color: #fff; border-color: var(--sent-primary); }
+.atp-btn.ghost   { background: var(--sent-surface-card); color: var(--sent-text); border-color: var(--sent-line); }
+.atp-btn.danger  { background: var(--sent-danger); color: #fff; border-color: var(--sent-danger); }
+.atp-btn.warn    { background: var(--sent-warn); color: #fff; border-color: var(--sent-warn); }
+.atp-btn.ok      { background: var(--sent-ok); color: #fff; border-color: var(--sent-ok); }
+
+/* Alert level picker */
+.atp-level-group {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.atp-level-btn {
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--sent-line);
+  background: var(--sent-surface-card);
+  color: var(--sent-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Public Sans', sans-serif;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.atp-level-btn.active-high   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.atp-level-btn.active-medium { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.atp-level-btn.active-low    { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+
+:root[data-theme='dark'] .atp-level-btn.active-high   { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
+:root[data-theme='dark'] .atp-level-btn.active-medium { background: #431407; color: #fb923c; border-color: #7c2d12; }
+:root[data-theme='dark'] .atp-level-btn.active-low    { background: #052e16; color: #6ee7b7; border-color: #064e3b; }
+
+/* Form fields */
+.atp-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .atp-field-row { grid-template-columns: 1fr; }
+}
+
+.atp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.atp-field label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sent-text-muted);
+}
+
+.atp-field input,
+.atp-field textarea,
+.atp-field select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--sent-line);
+  border-radius: 8px;
+  background: var(--sent-surface);
+  color: var(--sent-text);
+  font-size: 0.875rem;
+  font-family: 'Public Sans', sans-serif;
+  transition: border-color 0.15s;
+}
+
+.atp-field input:focus,
+.atp-field textarea:focus,
+.atp-field select:focus {
+  outline: none;
+  border-color: var(--sent-primary);
+}
+
+.atp-field textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+/* Console log */
+.atp-log {
+  margin-top: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--sent-surface-soft);
+  border: 1px solid var(--sent-line);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+}
+
+.atp-log-entry {
+  font-size: 0.82rem;
+  color: var(--sent-text-muted);
+  padding: 0.18rem 0;
+  font-family: 'Public Sans', monospace;
+  border-bottom: 1px solid var(--sent-line);
+}
+
+.atp-log-entry:last-child { border-bottom: none; }
+.atp-log-entry.ok   { color: var(--sent-ok); }
+.atp-log-entry.err  { color: var(--sent-danger); }
+.atp-log-entry.warn { color: var(--sent-warn); }
+
+/* Realtime status */
+.atp-realtime-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.atp-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.atp-status-dot.connected    { background: var(--sent-ok); box-shadow: 0 0 0 3px rgba(13,110,64,.2); }
+.atp-status-dot.disconnected { background: var(--sent-danger); }
+.atp-status-dot.connecting   { background: var(--sent-warn); animation: atpPulse 1s infinite; }
+
+@keyframes atpPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.atp-status-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sent-text);
+}
