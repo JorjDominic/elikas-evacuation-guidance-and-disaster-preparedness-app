@@ -220,9 +220,17 @@ function AdminAlertsPage() {
 
 	const mappable = filteredAlerts.filter((a) => a.latitude != null && a.longitude != null);
 
+	// Severity icon and color
+	const severityMeta = {
+		high:   { icon: '🚨', color: '#c41919', chip: '#fff0f0' },
+		medium: { icon: '⚠️', color: '#c06000', chip: '#fff7e6' },
+		low:    { icon: 'ℹ️', color: '#0d6e40', chip: '#e6fff2' },
+		all:    { icon: '📢', color: '#2563eb', chip: '#e6f0ff' },
+	};
+
 	return (
-		<section className="app-page">
-			<div className="app-shell">
+		<section className="app-page admin-alerts-page">
+			<div className="app-shell admin-page-wrap">
 				<div className="page-hero">
 					<h1>Manage Alerts</h1>
 					<p>Create targeted warnings, tune severity levels, and publish verified updates to residents and responders.</p>
@@ -232,7 +240,7 @@ function AdminAlertsPage() {
 					</div>
 				</div>
 
-				<div className="app-page-head">
+				<div className="admin-head">
 					<span className="page-chip">Advisory Management</span>
 					<button type="button" className="btn-inline primary" onClick={() => setModal({ mode: 'add' })}>+ Create Alert</button>
 				</div>
@@ -244,7 +252,7 @@ function AdminAlertsPage() {
 						placeholder="Search by title or area…"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						style={{ padding: '0.45rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border-color, #ddd)', fontSize: '0.9rem', flex: '1 1 180px' }}
+						style={{ padding: '0.45rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border-color, #ddd)', fontSize: '0.9rem', flex: '1 1 180px', background:'#fff' }}
 						aria-label="Search alerts"
 					/>
 					{['all', 'high', 'medium', 'low'].map((lvl) => (
@@ -253,8 +261,9 @@ function AdminAlertsPage() {
 							type="button"
 							className={`btn-inline ${levelFilter === lvl ? 'primary' : ''}`}
 							onClick={() => setLevelFilter(lvl)}
-							style={{ textTransform: 'capitalize' }}
+							style={{ textTransform: 'capitalize', background:levelFilter===lvl?severityMeta[lvl].chip:'', color:levelFilter===lvl?severityMeta[lvl].color:'' }}
 						>
+							<span style={{fontSize:'1.1rem',marginRight:3}}>{severityMeta[lvl].icon}</span>
 							{lvl === 'all' ? 'All' : lvl}
 						</button>
 					))}
@@ -290,34 +299,89 @@ function AdminAlertsPage() {
 				)}
 
 				{!loading && (
-					<div className="soft-grid">
+					<div className="admin-alert-grid">
 						{filteredAlerts.length === 0 ? (
-							<p>{alerts.length === 0 ? 'No alerts found. Create one above.' : 'No alerts match your filters.'}</p>
+							<div style={{textAlign:'center',padding:'2.5rem 0',color:'#888'}}>
+								<span style={{fontSize:'2.5rem',display:'block',marginBottom:'0.5rem'}}>🔔</span>
+								<p style={{fontSize:'1.1rem'}}>{alerts.length === 0 ? 'No alerts found. Create one above.' : 'No alerts match your filters.'}</p>
+							</div>
 						) : (
-							filteredAlerts.map((alert) => (
-								<div key={alert.id} className="soft-card">
-									<h3>{alert.title}</h3>
-									<p><strong>Severity:</strong> <span className={`status-pill ${alert.level}`}>{alert.level}</span></p>
-									<p><strong>Area:</strong> {alert.area}</p>
-									{alert.description && <p>{alert.description}</p>}
-									{alert.latitude != null && alert.longitude != null && (
-										<div style={{ marginTop: '0.5rem', borderRadius: '0.5rem', overflow: 'hidden', height: '160px' }}>
-											<MapContainer
-												center={[alert.latitude, alert.longitude]}
-												zoom={13}
-												style={{ height: '100%', width: '100%' }}
-												scrollWheelZoom={false}
-												zoomControl={false}
-												dragging={false}
-												attributionControl={false}
-											>
-												<TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-												<Marker position={[alert.latitude, alert.longitude]} />
-											</MapContainer>
+							filteredAlerts.map((alert) => {
+								const sev = severityMeta[alert.level] || severityMeta.medium;
+								const highlight = alert.level === 'high';
+								return (
+									<div key={alert.id} className="admin-alert-card" style={{boxShadow:'0 2px 12px rgba(196,25,25,0.07)',borderLeft:highlight?'5px solid #c41919':'1px solid #e5e7eb',background:highlight?'#fff6f6':'#fff',transition:'box-shadow 0.2s'}}>
+										<div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
+											<span style={{fontSize:'1.3rem'}}>{sev.icon}</span>
+											<span style={{background:sev.chip,color:sev.color,fontWeight:700,padding:'0.2rem 0.7rem',borderRadius:999,fontSize:'0.8rem',letterSpacing:'0.5px'}}>{alert.level}</span>
 										</div>
-									)}
-									<div className="action-row" style={{ marginTop: '0.6rem' }}>
+										<h3 style={{margin:'0.2rem 0 0.3rem'}}>{alert.title}</h3>
+										<p style={{margin:'0.2rem 0 0.5rem',color:'#374151',fontSize:'0.97rem'}}><strong>Area:</strong> {alert.area}</p>
+										{alert.description && <p style={{margin:'0.2rem 0 0.5rem',color:'#374151',fontSize:'0.97rem'}}>{alert.description}</p>}
 										{alert.latitude != null && alert.longitude != null && (
+											<div style={{ marginTop: '0.5rem', borderRadius: '0.5rem', overflow: 'hidden', height: '120px', boxShadow:'0 1px 6px rgba(37,99,235,0.07)' }}>
+												<MapContainer
+													center={[alert.latitude, alert.longitude]}
+													zoom={13}
+													style={{ height: '100%', width: '100%' }}
+													scrollWheelZoom={false}
+													zoomControl={false}
+													dragging={false}
+													attributionControl={false}
+												>
+													<TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+													<Marker position={[alert.latitude, alert.longitude]} />
+												</MapContainer>
+											</div>
+										)}
+										<div style={{display:'flex',gap:'0.5rem',marginTop:'0.7rem'}}>
+											<button type="button" className="btn-inline" title="Edit" onClick={() => setModal({ mode: 'edit', alert })} style={{display:'flex',alignItems:'center',gap:4}}>
+												<span style={{fontSize:'1.1rem'}}>✏️</span> Edit
+											</button>
+											<button type="button" className="btn-inline danger" title="Delete" onClick={() => setDeleteTarget(alert)} style={{display:'flex',alignItems:'center',gap:4}}>
+												<span style={{fontSize:'1.1rem'}}>🗑️</span> Delete
+											</button>
+											{alert.latitude != null && alert.longitude != null && (
+												<button type="button" className="btn-inline" style={{color:'#2563eb'}} onClick={()=>setFlyTo([alert.latitude,alert.longitude])}>
+													<span style={{fontSize:'1.1rem'}}>🗺️</span> View on Map
+												</button>
+											)}
+										</div>
+									</div>
+								);
+							})
+						)}
+					</div>
+				)}
+
+				{modal && (
+					<AlertModal
+						initial={modal.mode === 'edit' ? modal.alert : null}
+						onSave={handleSave}
+						onClose={() => setModal(null)}
+					/>
+				)}
+
+				{deleteTarget && (
+					<div className="ac-modal-overlay" role="dialog" aria-modal="true">
+						<div className="ac-modal">
+							<div className="ac-modal-head">
+								<h2>Delete Alert</h2>
+								<button type="button" className="ac-modal-close" onClick={() => setDeleteTarget(null)} aria-label="Close">&times;</button>
+							</div>
+							<p>Are you sure you want to delete <strong>{deleteTarget.title}</strong>?</p>
+							<div className="ac-modal-actions">
+								<button type="button" className="btn-inline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button>
+								<button type="button" className="btn-inline danger" onClick={handleDelete} disabled={deleting}>
+									{deleting ? 'Deleting…' : 'Delete'}
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+			</div>
+		</section>
+	);
 											<button
 												type="button"
 												className="btn-inline"

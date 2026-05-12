@@ -76,74 +76,92 @@ function AdminGuidesPage() {
 			.select('*')
 			.order('created_at', { ascending: false });
 		if (err) setError(err.message);
-		else setGuides(data || []);
-		setLoading(false);
-	}, []);
-
-	useEffect(() => { fetchGuides(); }, [fetchGuides]);
-
-	const handleSave = async (form) => {
-		if (modal?.mode === 'add') {
-			const { data, error: err } = await supabase.from('guides').insert([form]).select().single();
-			if (err) return { error: err.message };
-			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.create', targetType: 'guide', targetId: data?.id, meta: { title: form.title } });
-		} else {
-			const { error: err } = await supabase.from('guides').update(form).eq('id', modal.guide.id);
-			if (err) return { error: err.message };
-			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.update', targetType: 'guide', targetId: modal.guide.id, meta: { title: form.title } });
-		}
-		await fetchGuides();
-		return {};
-	};
-
-	const handleDelete = async () => {
-		setDeleting(true);
-		const { error: err } = await supabase.from('guides').delete().eq('id', deleteTarget.id);
-		if (err) setError(err.message);
-		else {
-			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.delete', targetType: 'guide', targetId: deleteTarget.id, meta: { title: deleteTarget.title } });
-			await fetchGuides();
-		}
-		setDeleting(false);
-		setDeleteTarget(null);
-	};
-
-	return (
-		<section className="app-page">
-			<div className="app-shell">
-				<div className="page-hero">
-					<h1>Manage Guides and Routes</h1>
-					<p>Curate preparedness modules and keep evacuation route instructions clear, current, and actionable.</p>
-					<div className="hero-meta">
-						<span className="hero-pill">Learning Content Desk</span>
-						<span className="hero-pill">Version Controlled Updates</span>
+		return (
+			<section className="app-page admin-guides-page">
+				<div className="app-shell admin-page-wrap">
+					<div className="page-hero">
+						<h1>Manage Guides and Routes</h1>
+						<p>Curate preparedness modules and keep evacuation route instructions clear, current, and actionable.</p>
+						<div className="hero-meta">
+							<span className="hero-pill">Learning Content Desk</span>
+							<span className="hero-pill">Version Controlled Updates</span>
+						</div>
 					</div>
-				</div>
 
-				<div className="app-page-head">
-					<span className="page-chip">Guide Publishing</span>
-					<button type="button" className="btn-inline primary" onClick={() => setModal({ mode: 'add' })}>+ Add Content</button>
-				</div>
+					<div className="admin-head">
+						<span className="page-chip">Guide Publishing</span>
+						<button type="button" className="btn-inline primary" onClick={() => setModal({ mode: 'add' })}>+ Add Content</button>
+					</div>
 
-				{error && <p style={{ color: 'var(--color-danger, red)', marginBottom: '0.75rem' }}>{error}</p>}
-				{loading && <p>Loading guides…</p>}
+					{error && <p style={{ color: 'var(--color-danger, red)', marginBottom: '0.75rem' }}>{error}</p>}
+					{loading && <p>Loading guides…</p>}
 
-				{!loading && (
-					<div className="soft-grid">
-						{guides.length === 0 ? (
-							<p>No guides found. Add one above.</p>
-						) : (
-							guides.map((item) => (
-								<div key={item.id} className="soft-card">
-									<span className="page-chip">{item.type}</span>
-									<h3>{item.title}</h3>
-									{item.content && <p>{item.content}</p>}
-									<div className="action-row">
-										<button type="button" className="btn-inline" onClick={() => setModal({ mode: 'edit', guide: item })}>Edit</button>
-										<button type="button" className="btn-inline danger" onClick={() => setDeleteTarget(item)}>Delete</button>
-									</div>
+					{!loading && (
+						<div className="guide-admin-grid">
+							{guides.length === 0 ? (
+								<div style={{textAlign:'center',padding:'2.5rem 0',color:'#888'}}>
+									<span style={{fontSize:'2.5rem',display:'block',marginBottom:'0.5rem'}}>📚</span>
+									<p style={{fontSize:'1.1rem'}}>No guides found.<br/>Click <b>+ Add Content</b> to create your first guide or route.</p>
 								</div>
-							))
+							) : (
+								guides.map((item) => {
+									const isRoute = item.type === 'Route';
+									const chipColor = isRoute ? '#f59e42' : '#2563eb';
+									const icon = isRoute ? '🛣️' : '📖';
+									const preview = item.content && item.content.length > 120 ? item.content.slice(0, 120) + '…' : item.content;
+									return (
+										<div key={item.id} className="guide-admin-card" style={{boxShadow:'0 2px 12px rgba(37,99,235,0.04)',transition:'box-shadow 0.2s',position:'relative',overflow:'hidden'}}>
+											<span style={{background:chipColor,color:'#fff',fontWeight:700,padding:'0.2rem 0.7rem',borderRadius:999,marginBottom:'0.5rem',display:'inline-block',fontSize:'0.8rem',letterSpacing:'0.5px'}}>{icon} {item.type}</span>
+											<h3 style={{margin:'0.6rem 0 0.3rem'}}>{item.title}</h3>
+											{item.content && (
+												<p style={{margin:'0.5rem 0 0.7rem',color:'#374151',fontSize:'0.97rem',minHeight:'2.2em'}}>
+													{preview}
+													{item.content.length > 120 && <span style={{color:'#2563eb',cursor:'pointer',marginLeft:4}} title={item.content}>Show more</span>}
+												</p>
+											)}
+											<div style={{display:'flex',gap:'0.5rem',marginTop:'0.5rem'}}>
+												<button type="button" className="btn-inline" title="Edit" onClick={() => setModal({ mode: 'edit', guide: item })} style={{display:'flex',alignItems:'center',gap:4}}>
+													<span style={{fontSize:'1.1rem'}}>✏️</span> Edit
+												</button>
+												<button type="button" className="btn-inline danger" title="Delete" onClick={() => setDeleteTarget(item)} style={{display:'flex',alignItems:'center',gap:4}}>
+													<span style={{fontSize:'1.1rem'}}>🗑️</span> Delete
+												</button>
+											</div>
+										</div>
+									);
+								})
+							)}
+						</div>
+					)}
+
+					{modal && (
+						<GuideModal
+							initial={modal.mode === 'edit' ? modal.guide : null}
+							onSave={handleSave}
+							onClose={() => setModal(null)}
+						/>
+					)}
+
+					{deleteTarget && (
+						<div className="ac-modal-overlay" role="dialog" aria-modal="true">
+							<div className="ac-modal">
+								<div className="ac-modal-head">
+									<h2>Delete Content</h2>
+									<button type="button" className="ac-modal-close" onClick={() => setDeleteTarget(null)} aria-label="Close">&times;</button>
+								</div>
+								<p>Are you sure you want to delete <strong>{deleteTarget.title}</strong>?</p>
+								<div className="ac-modal-actions">
+									<button type="button" className="btn-inline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button>
+									<button type="button" className="btn-inline danger" onClick={handleDelete} disabled={deleting}>
+										{deleting ? 'Deleting…' : 'Delete'}
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
+				</div>
+			</section>
+		);
 						)}
 					</div>
 				)}
