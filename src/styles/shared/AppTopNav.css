@@ -51,3 +51,130 @@
   background: #ef4444;
   color: #fff;
 }
+
+/* ── Notification bell ─────────────────────────────────── */
+.app-top-nav__notif-wrap {
+  position: relative;
+}
+
+.app-top-nav__notif-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+  color: #fff;
+  line-height: 1;
+}
+
+.app-top-nav__notif-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.app-top-nav__notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  pointer-events: none;
+}
+
+.app-top-nav__notif-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 310px;
+  max-height: 380px;
+  overflow-y: auto;
+  background: var(--sent-surface-card, #fff);
+  border: 1px solid var(--sent-line, #e2e8f0);
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  z-index: 10001;
+}
+
+.app-top-nav__notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem 0.6rem;
+  border-bottom: 1px solid var(--sent-line, #e2e8f0);
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--sent-text, #0f172a);
+}
+
+.app-top-nav__notif-head button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--sent-text-muted, #64748b);
+  padding: 0;
+}
+
+.app-top-nav__notif-head button:hover {
+  color: #ef4444;
+}
+
+.app-top-nav__notif-empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--sent-text-muted, #64748b);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.app-top-nav__notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--sent-line, #e2e8f0);
+}
+
+.app-top-nav__notif-item:last-child {
+  border-bottom: none;
+}
+
+.app-top-nav__notif-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.app-top-nav__notif-text strong {
+  display: block;
+  font-size: 0.83rem;
+  color: var(--sent-text, #0f172a);
+  font-weight: 600;
+}
+
+.app-top-nav__notif-text p {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--sent-text-muted, #64748b);
+  line-height: 1.4;
+}
+
+/* Mobile: bell stays visible alongside hamburger */
+@media (max-width: 640px) {
+  .app-top-nav__notif-panel {
+    right: -0.5rem;
+    width: 280px;
+  }
+}

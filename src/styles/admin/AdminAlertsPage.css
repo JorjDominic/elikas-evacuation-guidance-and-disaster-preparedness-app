@@ -1,76 +1,163 @@
-.admin-alerts-page {
-	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+/* -- Alert Filter Bar ----------------------------------- */
+.alerts-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  background: var(--sent-surface-card);
+  border: 1px solid var(--sent-line);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.admin-page-wrap {
-	width: min(1100px, 94%);
-	margin: 0 auto;
-	background: #fff;
-	border-radius: 1rem;
-	padding: 1rem 1.1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+.alerts-search-input {
+  padding: 0.42rem 0.75rem;
+  border-radius: 0.45rem;
+  border: 1px solid var(--sent-line);
+  font-size: 0.9rem;
+  flex: 1 1 180px;
+  min-width: 0;
+  background: var(--sent-surface);
+  color: var(--sent-text);
+  outline: none;
+  font-family: inherit;
 }
 
-.admin-head {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.8rem;
-	margin-bottom: 0.8rem;
+.alerts-search-input:focus {
+  border-color: var(--sent-primary);
+  box-shadow: 0 0 0 2px rgba(26, 58, 95, 0.12);
 }
 
-.admin-head h1 {
-	margin: 0;
-	font-size: 1.4rem;
+.level-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--sent-line);
+  background: var(--sent-surface);
+  color: var(--sent-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
 }
 
-.admin-head button {
-	border: none;
-	background: #1d4ed8;
-	color: #fff;
-	padding: 0.55rem 0.8rem;
-	border-radius: 0.5rem;
-	font-weight: 600;
-	cursor: pointer;
+.level-filter-btn:hover {
+  background: var(--sent-surface-soft);
+  color: var(--sent-text);
 }
 
+.level-filter-btn.active-all    { background: var(--sent-primary-soft); color: var(--sent-primary);  border-color: var(--sent-primary); }
+.level-filter-btn.active-high   { background: var(--sent-danger-bg);    color: var(--sent-danger);   border-color: var(--sent-danger);  }
+.level-filter-btn.active-medium { background: var(--sent-warn-bg);      color: var(--sent-warn);     border-color: var(--sent-warn);    }
+.level-filter-btn.active-low    { background: var(--sent-ok-bg);        color: var(--sent-ok);       border-color: var(--sent-ok);      }
+
+/* -- Alert Grid ----------------------------------------- */
 .admin-alert-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-	gap: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
 }
 
+/* -- Alert Card ----------------------------------------- */
 .admin-alert-card {
-	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 0.8rem;
-	padding: 0.9rem;
+  background: var(--sent-surface-card);
+  border: 1px solid var(--sent-line);
+  border-top-width: 3px;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.admin-alert-card h3 {
-	margin: 0;
-	font-size: 1rem;
+.admin-alert-card:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-.admin-alert-card p {
-	margin: 0.45rem 0;
-	color: #374151;
+.admin-alert-card.high   { border-top-color: var(--sent-danger); }
+.admin-alert-card.medium { border-top-color: var(--sent-warn);   }
+.admin-alert-card.low    { border-top-color: var(--sent-ok);     }
+
+/* -- Card Header -- */
+.aac-header {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1rem 0;
 }
 
-.admin-alert-card div {
-	margin-top: 0.65rem;
-	display: flex;
-	gap: 0.5rem;
+.aac-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
 
-.admin-alert-card button {
-	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
-	padding: 0.45rem 0.65rem;
-	border-radius: 0.45rem;
-	cursor: pointer;
+.admin-alert-card.high   .aac-level-badge { background: var(--sent-danger-bg); color: var(--sent-danger); }
+.admin-alert-card.medium .aac-level-badge { background: var(--sent-warn-bg);   color: var(--sent-warn);   }
+.admin-alert-card.low    .aac-level-badge { background: var(--sent-ok-bg);     color: var(--sent-ok);     }
+
+/* -- Card Body -- */
+.aac-body {
+  padding: 0.35rem 1rem 0.8rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.aac-title {
+  margin: 0.4rem 0 0.35rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--sent-text);
+  line-height: 1.35;
+}
+
+.aac-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.83rem;
+  color: var(--sent-text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.aac-desc {
+  font-size: 0.87rem;
+  color: var(--sent-text-muted);
+  line-height: 1.55;
+  margin: 0.1rem 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.aac-map {
+  margin-top: 0.65rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+/* -- Card Footer -- */
+.aac-footer {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--sent-line);
+  background: var(--sent-surface);
 }

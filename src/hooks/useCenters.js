@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 
-export function useCenters() {
+export function useCenters({ limit = 200 } = {}) {
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -10,11 +10,12 @@ export function useCenters() {
     const { data, error: err } = await supabase
       .from('evacuation_centers')
       .select('*')
-      .order('municipality', { ascending: true });
+      .order('municipality', { ascending: true })
+      .limit(limit);
     if (err) setError(err.message);
     else { setCenters(data || []); setError(''); }
     setLoading(false);
-  }, []);
+  }, [limit]);
 
   useEffect(() => {
     fetchCenters();

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 
-export function useAlerts() {
+export function useAlerts({ limit = 50 } = {}) {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -10,11 +10,12 @@ export function useAlerts() {
     const { data, error: err } = await supabase
       .from('alerts')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(limit);
     if (err) setError(err.message);
     else { setAlerts(data || []); setError(''); }
     setLoading(false);
-  }, []);
+  }, [limit]);
 
   useEffect(() => {
     fetchAlerts();

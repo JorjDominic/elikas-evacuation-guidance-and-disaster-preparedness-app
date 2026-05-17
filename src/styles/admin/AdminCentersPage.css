@@ -11,8 +11,8 @@
 }
 
 .ac-modal {
-  background: var(--surface, #fff);
-  color: var(--text, #111);
+  background: var(--sent-surface-card);
+  color: var(--sent-text);
   border-radius: 0.875rem;
   width: min(680px, 100%);
   max-height: 90vh;
@@ -42,23 +42,24 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-muted, #666);
+  color: var(--sent-text-muted);
   line-height: 1;
   padding: 0 0.25rem;
 }
 
 .ac-modal-error {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--sent-danger-bg);
+  color: var(--sent-danger);
   border-radius: 0.5rem;
   padding: 0.6rem 0.9rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
+  border: 1px solid rgba(196, 25, 25, 0.3);
 }
 
 /* ── Form layout ── */
 .ac-modal-form fieldset {
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--sent-line);
   border-radius: 0.5rem;
   padding: 0.75rem 1rem 1rem;
   margin-bottom: 1rem;
@@ -70,7 +71,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0 0.4rem;
-  color: var(--text-muted, #666);
+  color: var(--sent-text-muted);
 }
 
 .ac-modal-form label {
@@ -80,16 +81,17 @@
   font-size: 0.875rem;
   font-weight: 500;
   flex: 1;
+  color: var(--sent-text);
 }
 
 .ac-modal-form input,
 .ac-modal-form select {
   padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border, #d1d5db);
+  border: 1px solid var(--sent-line);
   border-radius: 0.4rem;
   font-size: 0.9rem;
-  background: var(--input-bg, #f9fafb);
-  color: var(--text, #111);
+  background: var(--sent-surface);
+  color: var(--sent-text);
   width: 100%;
 }
 
@@ -142,12 +144,12 @@
 /* ── Table extras ── */
 .ac-facilities-cell {
   font-size: 0.8rem;
-  color: var(--text-muted, #555);
+  color: var(--sent-text-muted);
   max-width: 200px;
 }
 
 .ac-none {
-  color: var(--text-muted, #aaa);
+  color: var(--sent-text-muted);
 }
 
 .ac-action-cell {
@@ -158,33 +160,36 @@
 .ac-loading {
   padding: 1.5rem;
   text-align: center;
-  color: var(--text-muted, #666);
+  color: var(--sent-text-muted);
 }
 
 .ac-page-error {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--sent-danger-bg);
+  color: var(--sent-danger);
   border-radius: 0.5rem;
   padding: 0.6rem 0.9rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
+  border: 1px solid rgba(196, 25, 25, 0.3);
 }
 
 .status-pill.warning {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--sent-warn-bg);
+  color: var(--sent-warn);
+  border-color: rgba(192, 96, 0, 0.4);
 }
 
 .status-pill.closed {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--sent-danger-bg);
+  color: var(--sent-danger);
+  border-color: rgba(196, 25, 25, 0.35);
 }
 
 /* ── Legacy classes kept ── */
 .admin-centers-page {
 	min-height: 100vh;
 	padding: 2rem 1rem;
-	background: #f6f6f9;
+	background: var(--sent-surface);
 	font-family: 'Poppins', sans-serif;
 }
 
@@ -217,7 +222,7 @@
 .admin-page-wrap {
 	width: min(1100px, 94%);
 	margin: 0 auto;
-	background: #fff;
+	background: var(--sent-surface-card);
 	border-radius: 1rem;
 	padding: 1rem 1.1rem;
 	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
@@ -235,13 +240,13 @@
 
 .ac-map-hint {
   font-size: 0.8rem;
-  color: var(--text-muted, #666);
+  color: var(--sent-text-muted);
   margin: 0.3rem 0 0.4rem;
 }
 
 .ac-coords-hint {
   font-size: 0.8rem;
-  color: var(--text-muted, #555);
+  color: var(--sent-text-muted);
   margin: 0.4rem 0 0;
   display: flex;
   align-items: center;
@@ -250,35 +255,35 @@
 
 .ac-clear-pin {
   background: none;
-  border: 1px solid var(--border, #d1d5db);
+  border: 1px solid var(--sent-line);
   border-radius: 0.3rem;
   padding: 0.15rem 0.5rem;
   font-size: 0.75rem;
   cursor: pointer;
-  color: var(--text-muted, #555);
+  color: var(--sent-text-muted);
 }
 
 .ac-clear-pin:hover {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #fca5a5;
+  background: var(--sent-danger-bg);
+  color: var(--sent-danger);
+  border-color: rgba(196, 25, 25, 0.4);
 }
 
 .ac-gps-btn {
-  background: white;
+  background: var(--sent-surface-card);
   border: 2px solid rgba(0, 0, 0, 0.2);
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  color: #333;
+  color: var(--sent-text);
   white-space: nowrap;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .ac-gps-btn:hover {
-  background: #f0f0f0;
+  background: var(--sent-surface-soft);
 }
 
 .admin-head {
@@ -312,19 +317,19 @@
 .admin-centers-page th,
 .admin-centers-page td {
 	padding: 0.65rem;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--sent-line);
 	text-align: left;
 }
 
 .admin-centers-page th {
 	font-size: 0.85rem;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .admin-centers-page td button {
 	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
+	background: rgba(26, 58, 95, 0.12);
+	color: var(--sent-primary);
 	padding: 0.4rem 0.65rem;
 	border-radius: 0.45rem;
 	cursor: pointer;

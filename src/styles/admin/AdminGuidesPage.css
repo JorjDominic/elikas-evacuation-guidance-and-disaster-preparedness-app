@@ -1,79 +1,94 @@
-.admin-guides-page {
-	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
-}
-
-.admin-page-wrap {
-	width: min(1100px, 94%);
-	margin: 0 auto;
-	background: #fff;
-	border-radius: 1rem;
-	padding: 1rem 1.1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
-}
-
-.admin-head {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.8rem;
-	margin-bottom: 0.8rem;
-}
-
-.admin-head h1 {
-	margin: 0;
-	font-size: 1.4rem;
-}
-
-.admin-head button {
-	border: none;
-	background: #1d4ed8;
-	color: #fff;
-	padding: 0.55rem 0.8rem;
-	border-radius: 0.5rem;
-	font-weight: 600;
-	cursor: pointer;
-}
-
+/* -- Guide Grid ----------------------------------------- */
 .guide-admin-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-	gap: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
+/* -- Guide Card ----------------------------------------- */
 .guide-admin-card {
-	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 0.8rem;
-	padding: 0.9rem;
+  background: var(--sent-surface-card);
+  border: 1px solid var(--sent-line);
+  border-top-width: 3px;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.guide-admin-card span {
-	font-size: 0.7rem;
-	font-weight: 700;
-	padding: 0.2rem 0.45rem;
-	border-radius: 999px;
-	background: #e2e8f0;
-	color: #475569;
+.guide-admin-card:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-.guide-admin-card h3 {
-	margin: 0.6rem 0;
-	font-size: 1rem;
+.guide-admin-card.type-route { border-top-color: #f59e42; }
+.guide-admin-card.type-guide { border-top-color: var(--sent-primary); }
+
+/* -- Card Header -- */
+.gac-header {
+  padding: 0.875rem 1rem 0;
 }
 
-.guide-admin-card div {
-	display: flex;
-	gap: 0.5rem;
+.gac-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
-.guide-admin-card button {
-	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
-	padding: 0.45rem 0.65rem;
-	border-radius: 0.45rem;
-	cursor: pointer;
+.guide-admin-card.type-guide .gac-type-badge {
+  background: rgba(26, 58, 95, 0.10);
+  color: var(--sent-primary);
+}
+
+.guide-admin-card.type-route .gac-type-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme='dark'] .guide-admin-card.type-route .gac-type-badge {
+  background: #431407;
+  color: #fb923c;
+}
+
+/* -- Card Body -- */
+.gac-body {
+  padding: 0.35rem 1rem 0.85rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gac-title {
+  margin: 0.4rem 0 0.35rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--sent-text);
+  line-height: 1.35;
+}
+
+.gac-preview {
+  font-size: 0.87rem;
+  color: var(--sent-text-muted);
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* -- Card Footer -- */
+.gac-footer {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--sent-line);
+  background: var(--sent-surface);
 }

@@ -1,0 +1,65 @@
+/* ── Tabbed page wrapper — merges two pages under a sticky sub-nav ── */
+
+.tabbed-page-wrapper {
+  padding-top: 74px; /* same as fixed nav height accounted for in .app-page */
+}
+
+/* Sticky tab bar sits immediately below the fixed .app-top-nav */
+.tabbed-page-wrapper__bar {
+  position: sticky;
+  top: 74px;
+  z-index: 9990;
+  background: var(--sent-nav-bg, rgba(250, 246, 238, 0.92));
+  border-bottom: 1px solid var(--sent-nav-border, rgba(26, 28, 20, 0.10));
+  backdrop-filter: blur(12px);
+}
+
+.tabbed-page-wrapper__tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  width: min(1180px, 92vw);
+  margin: 0 auto;
+}
+
+.tabbed-page-tab {
+  border: 1px solid var(--sent-line, #d8d0be);
+  border-radius: 10px;
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--sent-text);
+  background: var(--sent-surface-card, #fff);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.tabbed-page-tab:hover {
+  background: var(--sent-surface-soft, #ede8da);
+}
+
+.tabbed-page-tab.active {
+  background: linear-gradient(135deg, #1a3a5f, #1a5496);
+  color: #fff;
+  border-color: #1a3a5f;
+}
+
+/* Strip the top padding that .app-page normally uses to clear the fixed nav,
+   since the wrapper's padding-top + sticky bar already handle that offset. */
+.tabbed-page-wrapper__content .app-page {
+  padding-top: 1.5rem;
+}
+
+/* Dark theme overrides */
+[data-theme='dark'] .tabbed-page-wrapper__bar {
+  background: var(--sent-nav-bg, rgba(17, 24, 39, 0.9));
+  border-bottom-color: var(--sent-nav-border, rgba(148, 163, 184, 0.2));
+}
+
+[data-theme='dark'] .tabbed-page-tab {
+  background: var(--sent-surface-card, #1f2937);
+}
+
+[data-theme='dark'] .tabbed-page-tab:hover {
+  background: var(--sent-surface-soft, #0f172a);
+}

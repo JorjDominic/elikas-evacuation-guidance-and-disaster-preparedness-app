@@ -1,16 +1,107 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../config/supabase';
+
+// ── Page key ↔ URL path mapping ────────────────────────────────────────────────
+const PAGE_TO_PATH = {
+  landing:            '/',
+  auth:               '/login',
+  signup:             '/signup',
+  'forgot-password':  '/forgot-password',
+  'reset-password':   '/reset-password',
+  dashboard:          '/dashboard',
+  centers:            '/centers',
+  'center-detail':    '/centers',    // actual nav uses /centers/:id
+  alerts:             '/alerts',
+  guides:             '/guides',
+  'hazard-report':    '/report',
+  'my-reports':       '/my-reports',
+  'user-reports':     '/reports',
+  profile:            '/profile',
+  'admin-dashboard':  '/admin',
+  'admin-centers':    '/admin/centers',
+  'admin-content':    '/admin/content',
+  'admin-alerts':     '/admin/alerts',
+  'admin-guides':     '/admin/guides',
+  'admin-reports':    '/admin/reports',
+  'admin-management': '/admin/management',
+  'admin-users':      '/admin/users',
+  'admin-audit-logs': '/admin/audit-logs',
+  'admin-test':       '/admin/test',
+};
+
+const PATH_TO_PAGE = {
+  '/':                'landing',
+  '/login':           'auth',
+  '/signup':          'signup',
+  '/forgot-password': 'forgot-password',
+  '/reset-password':  'reset-password',
+  '/dashboard':       'dashboard',
+  '/centers':         'centers',
+  '/alerts':          'alerts',
+  '/guides':          'guides',
+  '/report':          'hazard-report',
+  '/my-reports':      'my-reports',
+  '/reports':         'user-reports',
+  '/profile':         'profile',
+  '/admin':              'admin-dashboard',
+  '/admin/centers':      'admin-centers',
+  '/admin/content':      'admin-content',
+  '/admin/alerts':       'admin-alerts',
+  '/admin/guides':       'admin-guides',
+  '/admin/reports':      'admin-reports',
+  '/admin/management':   'admin-management',
+  '/admin/users':        'admin-users',
+  '/admin/audit-logs':   'admin-audit-logs',
+  '/admin/test':         'admin-test',
+};
+
+function pathToPageKey(pathname) {
+  if (PATH_TO_PAGE[pathname]) return PATH_TO_PAGE[pathname];
+  if (/^\/centers\/.+/.test(pathname)) return 'center-detail';
+  return 'landing';
+}
+
+function pathToCenterId(pathname) {
+  const m = pathname.match(/^\/centers\/([^/]+)$/);
+  return m ? m[1] : null;
+}
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [page, setPage] = useState('landing');
-  const [selectedCenterId, setSelectedCenterId] = useState(null);
+  const [selectedCenterId, setSelectedCenterId] = useState(
+    () => pathToCenterId(window.location.pathname)
+  );
+
+  // Derive current page key from URL — components can still read ctx.page
+  const page = pathToPageKey(location.pathname);
+
+  // Keep selectedCenterId in sync when navigating directly to /centers/:id
+  useEffect(() => {
+    const id = pathToCenterId(location.pathname);
+    if (id) setSelectedCenterId(id);
+  }, [location.pathname]);
+
+  // setPage compat wrapper: converts legacy page-key calls to URL navigation
+  const setPage = useCallback((key, centerId) => {
+    if (key === 'center-detail') {
+      const id = centerId || selectedCenterId;
+      navigate(`/centers/${id}`);
+    } else {
+      navigate(PAGE_TO_PATH[key] || '/');
+    }
+  }, [navigate, selectedCenterId]);
+
+  const UNAUTH_PATHS = ['/', '/login', '/signup', '/forgot-password'];
 
   useEffect(() => {
-    const redirectByRole = async (user) => {
+    const redirectByRole = async (user, isInitial = false) => {
       let profile = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
@@ -33,21 +124,27 @@ export function AuthProvider({ children }) {
         user.email;
 
       setCurrentUser({ id: user.id, name, email: user.email, role });
-      setPage(role === 'admin' ? 'admin-dashboard' : 'dashboard');
+
+      // On initial session restore, only redirect from unauthenticated pages
+      // so that refreshing /dashboard or /admin stays on the same page.
+      const currentPath = window.location.pathname;
+      if (!isInitial || UNAUTH_PATHS.includes(currentPath)) {
+        navigate(role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+      }
       setAuthLoading(false);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') {
-        if (session?.user) redirectByRole(session.user);
+        if (session?.user) redirectByRole(session.user, true);
         else setAuthLoading(false);
       } else if (event === 'SIGNED_IN') {
-        if (session?.user) redirectByRole(session.user);
+        if (session?.user) redirectByRole(session.user, false);
       } else if (event === 'PASSWORD_RECOVERY') {
-        setPage('reset-password');
+        navigate('/reset-password');
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
-        setPage('landing');
+        navigate('/');
       }
     });
 
@@ -56,7 +153,8 @@ export function AuthProvider({ children }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const handleLogin = async (loginForm) => {
     const { error } = await supabase.auth.signInWithPassword({

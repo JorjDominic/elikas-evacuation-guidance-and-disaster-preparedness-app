@@ -1,9 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import '../styles/shared/AppTopNav.css';
 import '../styles/shared/sentinel.css';
 
 function AppTopNav({ role, page, items, onNavigate, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [notifs, setNotifs] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const { title, body, level } = e.detail || {};
+      setNotifs((n) => [{ title, body, level: level || 'info', ts: Date.now() }, ...n].slice(0, 30));
+      setUnread((u) => u + 1);
+    };
+    window.addEventListener('elikas:notification', handler);
+    return () => window.removeEventListener('elikas:notification', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [notifOpen]);
+
+  const toggleNotifs = () => {
+    setNotifOpen((o) => !o);
+    setUnread(0);
+  };
+
+  const levelIcon = (level) => {
+    if (level === 'high')   return '🔴';
+    if (level === 'medium') return '🟠';
+    if (level === 'low')    return '🟢';
+    return '🔔';
+  };
 
   const handleNav = (key) => {
     onNavigate(key);
@@ -44,6 +80,51 @@ function AppTopNav({ role, page, items, onNavigate, onLogout }) {
           <button type="button" className="app-top-nav__btn logout" onClick={handleLogout}>
             Sign Out
           </button>
+        </div>
+
+        {/* Notification bell — always visible */}
+        <div className="app-top-nav__notif-wrap" ref={notifRef}>
+          <button
+            type="button"
+            className="app-top-nav__notif-btn"
+            onClick={toggleNotifs}
+            aria-label="Notifications"
+            aria-expanded={notifOpen}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            {unread > 0 && (
+              <span className="app-top-nav__notif-badge" aria-label={`${unread} unread`}>
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="app-top-nav__notif-panel" role="region" aria-label="Notification panel">
+              <div className="app-top-nav__notif-head">
+                <span>Notifications</span>
+                {notifs.length > 0 && (
+                  <button type="button" onClick={() => setNotifs([])} aria-label="Clear all">Clear all</button>
+                )}
+              </div>
+              {notifs.length === 0 ? (
+                <p className="app-top-nav__notif-empty">No notifications yet</p>
+              ) : (
+                notifs.map((n, i) => (
+                  <div key={i} className={`app-top-nav__notif-item app-top-nav__notif-item--${n.level}`}>
+                    <span className="app-top-nav__notif-icon">{levelIcon(n.level)}</span>
+                    <div className="app-top-nav__notif-text">
+                      <strong>{n.title}</strong>
+                      {n.body && <p>{n.body}</p>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Hamburger button — visible on mobile only */}

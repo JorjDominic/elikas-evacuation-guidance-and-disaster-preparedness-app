@@ -4,6 +4,7 @@ import { writeAuditLog } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
+import '../../styles/admin/AdminGuidesPage.css';
 
 const EMPTY_GUIDE = { title: '', type: 'Guide', content: '' };
 
@@ -76,8 +77,40 @@ function AdminGuidesPage() {
 			.select('*')
 			.order('created_at', { ascending: false });
 		if (err) setError(err.message);
-		return (
-			<section className="app-page admin-guides-page">
+		else { setGuides(data || []); setError(''); }
+		setLoading(false);
+	}, []);
+
+	useEffect(() => { fetchGuides(); }, [fetchGuides]);
+
+	const handleSave = async (form) => {
+		if (modal?.mode === 'add') {
+			const { data, error: err } = await supabase.from('guides').insert([form]).select().single();
+			if (err) return { error: err.message };
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.create', targetType: 'guide', targetId: data?.id, meta: { title: form.title } });
+		} else {
+			const { error: err } = await supabase.from('guides').update(form).eq('id', modal.guide.id);
+			if (err) return { error: err.message };
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.update', targetType: 'guide', targetId: modal.guide.id, meta: { title: form.title } });
+		}
+		await fetchGuides();
+		return {};
+	};
+
+	const handleDelete = async () => {
+		setDeleting(true);
+		const { error: err } = await supabase.from('guides').delete().eq('id', deleteTarget.id);
+		if (err) setError(err.message);
+		else {
+			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.delete', targetType: 'guide', targetId: deleteTarget.id, meta: { title: deleteTarget.title } });
+			await fetchGuides();
+		}
+		setDeleting(false);
+		setDeleteTarget(null);
+	};
+
+	return (
+		<section className="app-page admin-guides-page">
 				<div className="app-shell admin-page-wrap">
 					<div className="page-hero">
 						<h1>Manage Guides and Routes</h1>
@@ -99,7 +132,7 @@ function AdminGuidesPage() {
 					{!loading && (
 						<div className="guide-admin-grid">
 							{guides.length === 0 ? (
-								<div style={{textAlign:'center',padding:'2.5rem 0',color:'#888'}}>
+								<div style={{textAlign:'center',padding:'2.5rem 0',color:'var(--sent-text-muted)'}}>
 									<span style={{fontSize:'2.5rem',display:'block',marginBottom:'0.5rem'}}>📚</span>
 									<p style={{fontSize:'1.1rem'}}>No guides found.<br/>Click <b>+ Add Content</b> to create your first guide or route.</p>
 								</div>
@@ -110,16 +143,15 @@ function AdminGuidesPage() {
 									const icon = isRoute ? '🛣️' : '📖';
 									const preview = item.content && item.content.length > 120 ? item.content.slice(0, 120) + '…' : item.content;
 									return (
-										<div key={item.id} className="guide-admin-card" style={{boxShadow:'0 2px 12px rgba(37,99,235,0.04)',transition:'box-shadow 0.2s',position:'relative',overflow:'hidden'}}>
-											<span style={{background:chipColor,color:'#fff',fontWeight:700,padding:'0.2rem 0.7rem',borderRadius:999,marginBottom:'0.5rem',display:'inline-block',fontSize:'0.8rem',letterSpacing:'0.5px'}}>{icon} {item.type}</span>
-											<h3 style={{margin:'0.6rem 0 0.3rem'}}>{item.title}</h3>
-											{item.content && (
-												<p style={{margin:'0.5rem 0 0.7rem',color:'#374151',fontSize:'0.97rem',minHeight:'2.2em'}}>
-													{preview}
-													{item.content.length > 120 && <span style={{color:'#2563eb',cursor:'pointer',marginLeft:4}} title={item.content}>Show more</span>}
-												</p>
-											)}
-											<div style={{display:'flex',gap:'0.5rem',marginTop:'0.5rem'}}>
+										<div key={item.id} className={`guide-admin-card type-${item.type.toLowerCase()}`}>
+											<div className="gac-header">
+												<span className="gac-type-badge">{icon} {item.type}</span>
+											</div>
+											<div className="gac-body">
+												<h3 className="gac-title">{item.title}</h3>
+												{item.content && <p className="gac-preview">{preview}</p>}
+											</div>
+											<div className="gac-footer">
 												<button type="button" className="btn-inline" title="Edit" onClick={() => setModal({ mode: 'edit', guide: item })} style={{display:'flex',alignItems:'center',gap:4}}>
 													<span style={{fontSize:'1.1rem'}}>✏️</span> Edit
 												</button>
@@ -162,38 +194,6 @@ function AdminGuidesPage() {
 				</div>
 			</section>
 		);
-						)}
-					</div>
-				)}
-
-				{modal && (
-					<GuideModal
-						initial={modal.mode === 'edit' ? modal.guide : null}
-						onSave={handleSave}
-						onClose={() => setModal(null)}
-					/>
-				)}
-
-				{deleteTarget && (
-					<div className="ac-modal-overlay" role="dialog" aria-modal="true">
-						<div className="ac-modal">
-							<div className="ac-modal-head">
-								<h2>Delete Content</h2>
-								<button type="button" className="ac-modal-close" onClick={() => setDeleteTarget(null)} aria-label="Close">&times;</button>
-							</div>
-							<p>Are you sure you want to delete <strong>{deleteTarget.title}</strong>?</p>
-							<div className="ac-modal-actions">
-								<button type="button" className="btn-inline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button>
-								<button type="button" className="btn-inline danger" onClick={handleDelete} disabled={deleting}>
-									{deleting ? 'Deleting…' : 'Delete'}
-								</button>
-							</div>
-						</div>
-					</div>
-				)}
-			</div>
-		</section>
-	);
 }
 
 export default AdminGuidesPage;

@@ -49,15 +49,12 @@ const CentersPage        = React.lazy(() => import('./views/user/CentersPage'));
 const CenterDetailPage   = React.lazy(() => import('./views/user/CenterDetailPage'));
 const AlertsPage         = React.lazy(() => import('./views/user/AlertsPage'));
 const GuidesPage         = React.lazy(() => import('./views/user/GuidesPage'));
-const HazardReportPage   = React.lazy(() => import('./views/user/HazardReportPage'));
-const MyReportsPage      = React.lazy(() => import('./views/user/MyReportsPage'));
 const ProfilePage        = React.lazy(() => import('./views/user/ProfilePage'));
+const UserReportsPage    = React.lazy(() => import('./views/user/UserReportsPage'));
 const AdminCentersPage   = React.lazy(() => import('./views/admin/AdminCentersPage'));
-const AdminAlertsPage    = React.lazy(() => import('./views/admin/AdminAlertsPage'));
-const AdminGuidesPage    = React.lazy(() => import('./views/admin/AdminGuidesPage'));
+const AdminContentPage   = React.lazy(() => import('./views/admin/AdminContentPage'));
 const AdminReportsPage   = React.lazy(() => import('./views/admin/AdminReportsPage'));
-const AdminUsersPage     = React.lazy(() => import('./views/admin/AdminUsersPage'));
-const AdminAuditLogsPage = React.lazy(() => import('./views/admin/AdminAuditLogsPage'));
+const AdminManagementPage = React.lazy(() => import('./views/admin/AdminManagementPage'));
 const AdminTestPage       = React.lazy(() => import('./views/admin/AdminTestPage'));
 
 // ── Fallback shown while lazy chunks load ────────────────────────────────────
@@ -108,24 +105,23 @@ function AppContent() {
   useNotifications();
 
   const userNavItems = [
-    { key: 'dashboard',     label: 'Dashboard'     },
-    { key: 'centers',       label: 'Centers'        },
-    { key: 'alerts',        label: 'Alerts'         },
-    { key: 'guides',        label: 'Guides'         },
-    { key: 'hazard-report', label: 'Report Hazard'  },
-    { key: 'my-reports',    label: 'My Reports'     },
-    { key: 'profile',       label: 'Profile'        },
+    { key: 'dashboard',      label: 'Dashboard' },
+    { key: 'centers',        label: 'Centers'   },
+    { key: 'alerts',         label: 'Alerts'    },
+    { key: 'guides',         label: 'Guides'    },
+    { key: 'user-reports',   label: 'Reports'   },
+    { key: 'profile',        label: 'Profile'   },
   ];
 
+  const isDev = process.env.NODE_ENV !== 'production';
+
   const adminNavItems = [
-    { key: 'admin-dashboard',  label: 'Dashboard'  },
-    { key: 'admin-centers',    label: 'Centers'    },
-    { key: 'admin-alerts',     label: 'Alerts'     },
-    { key: 'admin-guides',     label: 'Guides'     },
-    { key: 'admin-reports',    label: 'Reports'    },
-    { key: 'admin-users',      label: 'Users'      },
-    { key: 'admin-audit-logs', label: 'Audit Logs' },
-    { key: 'admin-test',       label: 'Test Console' },
+    { key: 'admin-dashboard',    label: 'Dashboard'  },
+    { key: 'admin-centers',      label: 'Centers'    },
+    { key: 'admin-content',      label: 'Content'    },
+    { key: 'admin-reports',      label: 'Reports'    },
+    { key: 'admin-management',   label: 'Management' },
+    ...(isDev ? [{ key: 'admin-test', label: 'Test Console' }] : []),
   ];
 
   const isAdmin = currentUser?.role === 'admin';
@@ -133,27 +129,24 @@ function AppContent() {
   const renderPage = () => {
     const adminPage = page.startsWith('admin-');
     if (adminPage && !isAdmin) return <DashboardPage />;
-    if (!adminPage && isAdmin && ['dashboard','centers','center-detail','alerts','guides','hazard-report','my-reports','profile'].includes(page)) {
+    if (!adminPage && isAdmin && ['dashboard','centers','center-detail','alerts','guides','user-reports','profile'].includes(page)) {
       return <AdminDashboardPage />;
     }
 
     switch (page) {
       case 'dashboard':      return <DashboardPage />;
-      case 'centers':        return <CentersPage onSelectCenter={(id) => { setSelectedCenterId(id); setPage('center-detail'); }} />;
+      case 'centers':        return <CentersPage onSelectCenter={(id) => { setSelectedCenterId(id); setPage('center-detail', id); }} />;
       case 'center-detail':  return <CenterDetailPage centerId={selectedCenterId} onBack={() => setPage('centers')} />;
       case 'alerts':         return <AlertsPage />;
-      case 'guides':         return <GuidesPage />;
-      case 'hazard-report':  return <HazardReportPage />;
-      case 'my-reports':     return <MyReportsPage />;
-      case 'profile':        return <ProfilePage />;
+      case 'guides':           return <GuidesPage />;
+      case 'user-reports':     return <UserReportsPage />;
+      case 'profile':          return <ProfilePage />;
       case 'admin-dashboard': return <AdminDashboardPage />;
-      case 'admin-centers':  return <AdminCentersPage />;
-      case 'admin-alerts':   return <AdminAlertsPage />;
-      case 'admin-guides':   return <AdminGuidesPage />;
-      case 'admin-reports':  return <AdminReportsPage />;
-      case 'admin-users':    return <AdminUsersPage />;
-      case 'admin-audit-logs': return <AdminAuditLogsPage />;
-      case 'admin-test':       return <AdminTestPage />;
+      case 'admin-centers':     return <AdminCentersPage />;
+      case 'admin-content':     return <AdminContentPage />;
+      case 'admin-reports':     return <AdminReportsPage />;
+      case 'admin-management':  return <AdminManagementPage />;
+      case 'admin-test':       return isDev ? <AdminTestPage /> : <div style={{ padding: '2rem', textAlign: 'center' }}><h2>Not available in production.</h2></div>;
       case 'reset-password': return <ResetPasswordPage onDone={() => setPage('landing')} />;
       case 'signup':         return <SignUpPage />;
       default:               return <div style={{ padding: '2rem', textAlign: 'center' }}><h2>Page not found.</h2></div>;

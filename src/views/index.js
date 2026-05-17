@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/user/index.css';
 import MapSection from '../components/MapSection';
+import { supabase } from '../config/supabase';
 
 function LandingPage({ onLogin, onRegister }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [stats, setStats] = useState({ centers: 24, municipalities: 21, barangays: 569 });
+
+  useEffect(() => {
+    supabase.rpc('get_landing_stats').then(({ data }) => {
+      if (data) setStats(data);
+    });
+  }, []);
 
   const handleNavLink = () => setMenuOpen(false);
 
@@ -104,19 +112,6 @@ function LandingPage({ onLogin, onRegister }) {
             &#8250;
           </button>
         </div>
-        <div className="hero-carousel-dots" role="tablist" aria-label="Choose hero image">
-          {heroImages.map((imageUrl, index) => (
-            <button
-              key={imageUrl}
-              type="button"
-              role="tab"
-              className={`hero-dot ${index === activeHeroIndex ? 'active' : ''}`}
-              aria-label={`Show hero image ${index + 1}`}
-              aria-selected={index === activeHeroIndex}
-              onClick={() => setActiveHeroIndex(index)}
-            />
-          ))}
-        </div>
         <div className="layout hero-content">
           <p className="eyebrow">Community Emergency Platform</p>
           <h1>
@@ -130,26 +125,37 @@ function LandingPage({ onLogin, onRegister }) {
             <button className="btn ghost-light" onClick={onLogin}>Open Dashboard</button>
           </div>
         </div>
-      </section>
-
-      {/* Stats Strip */}
-      <section className="stats-strip">
-        <div className="layout stats-grid">
-          <div className="stat-item">
-            <span className="stat-num">24</span>
-            <span className="stat-label">Evacuation Centers</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-num">21</span>
-            <span className="stat-label">Municipalities</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-num">569</span>
-            <span className="stat-label">Barangays Covered</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-num">24/7</span>
-            <span className="stat-label">Emergency Monitoring</span>
+        <div className="hero-carousel-dots" role="tablist" aria-label="Choose hero image">
+          {heroImages.map((imageUrl, index) => (
+            <button
+              key={imageUrl}
+              type="button"
+              role="tab"
+              className={`hero-dot ${index === activeHeroIndex ? 'active' : ''}`}
+              aria-label={`Show hero image ${index + 1}`}
+              aria-selected={index === activeHeroIndex}
+              onClick={() => setActiveHeroIndex(index)}
+            />
+          ))}
+        </div>
+        <div className="stats-strip">
+          <div className="layout stats-grid">
+            <div className="stat-item">
+              <span className="stat-num">{stats.centers}</span>
+              <span className="stat-label">Evacuation Centers</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-num">{stats.municipalities}</span>
+              <span className="stat-label">Municipalities</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-num">{stats.barangays}</span>
+              <span className="stat-label">Barangays Covered</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-num">24/7</span>
+              <span className="stat-label">Emergency Monitoring</span>
+            </div>
           </div>
         </div>
       </section>
