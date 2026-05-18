@@ -118,9 +118,25 @@ function AppContent() {
   const adminNavItems = [
     { key: 'admin-dashboard',    label: 'Dashboard'  },
     { key: 'admin-centers',      label: 'Centers'    },
-    { key: 'admin-content',      label: 'Content'    },
+    {
+      key: 'admin-content',
+      label: 'Content',
+      children: [
+        { key: 'admin-content.alerts', label: 'Alerts' },
+        { key: 'admin-content.guides', label: 'Guides' },
+      ],
+    },
     { key: 'admin-reports',      label: 'Reports'    },
-    { key: 'admin-management',   label: 'Management' },
+    {
+      key: 'admin-management',
+      label: 'Management',
+      children: [
+        { key: 'admin-management.users',      label: 'Users'      },
+        { key: 'admin-management.audit-logs', label: 'Audit Logs' },
+        { key: 'admin-management.simulation', label: 'Simulation' },
+        { key: 'admin-management.settings',   label: 'Settings'   },
+      ],
+    },
     ...(isDev ? [{ key: 'admin-test', label: 'Test Console' }] : []),
   ];
 
@@ -143,9 +159,15 @@ function AppContent() {
       case 'profile':          return <ProfilePage />;
       case 'admin-dashboard': return <AdminDashboardPage />;
       case 'admin-centers':     return <AdminCentersPage />;
-      case 'admin-content':     return <AdminContentPage />;
+      case 'admin-content':
+      case 'admin-content.alerts':  return <AdminContentPage initialTab="alerts" />;
+      case 'admin-content.guides':  return <AdminContentPage initialTab="guides" />;
       case 'admin-reports':     return <AdminReportsPage />;
-      case 'admin-management':  return <AdminManagementPage />;
+      case 'admin-management':
+      case 'admin-management.users':      return <AdminManagementPage initialTab="users" />;
+      case 'admin-management.audit-logs': return <AdminManagementPage initialTab="audit-logs" />;
+      case 'admin-management.simulation': return <AdminManagementPage initialTab="simulation" />;
+      case 'admin-management.settings':   return <AdminManagementPage initialTab="settings" />;
       case 'admin-test':       return isDev ? <AdminTestPage /> : <div style={{ padding: '2rem', textAlign: 'center' }}><h2>Not available in production.</h2></div>;
       case 'reset-password': return <ResetPasswordPage onDone={() => setPage('landing')} />;
       case 'signup':         return <SignUpPage />;

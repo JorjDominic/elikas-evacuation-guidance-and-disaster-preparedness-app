@@ -8,7 +8,9 @@ function AppTopNav({ role, page, items, onNavigate, onLogout }) {
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const notifRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
@@ -28,6 +30,15 @@ function AppTopNav({ role, page, items, onNavigate, onLogout }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [notifOpen]);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpenDropdown(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openDropdown]);
 
   const toggleNotifs = () => {
     setNotifOpen((o) => !o);
@@ -66,17 +77,53 @@ function AppTopNav({ role, page, items, onNavigate, onLogout }) {
         </div>
 
         {/* Desktop links */}
-        <div className="app-top-nav__links">
-          {items.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`app-top-nav__btn ${page === item.key ? 'active' : ''}`}
-              onClick={() => handleNav(item.key)}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div className="app-top-nav__links" ref={dropdownRef}>
+          {items.map((item) => {
+            const isActive = page === item.key || (item.children && item.children.some((c) => c.key === page));
+            if (item.children) {
+              return (
+                <div key={item.key} className="app-top-nav__dropdown-wrap">
+                  <button
+                    type="button"
+                    className={`app-top-nav__btn has-children${isActive ? ' active' : ''}`}
+                    onClick={() => setOpenDropdown(openDropdown === item.key ? null : item.key)}
+                    aria-haspopup="true"
+                    aria-expanded={openDropdown === item.key}
+                  >
+                    {item.label}
+                    <svg className={`app-top-nav__chevron${openDropdown === item.key ? ' open' : ''}`} viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  {openDropdown === item.key && (
+                    <div className="app-top-nav__dropdown" role="menu">
+                      {item.children.map((child) => (
+                        <button
+                          key={child.key}
+                          type="button"
+                          role="menuitem"
+                          className={`app-top-nav__dropdown-item${page === child.key ? ' active' : ''}`}
+                          onClick={() => { handleNav(child.key); setOpenDropdown(null); }}
+                        >
+                          {child.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={`app-top-nav__btn${isActive ? ' active' : ''}`}
+                onClick={() => handleNav(item.key)}
+              >
+                {item.label}
+              </button>
+            );
+          })}
           <button type="button" className="app-top-nav__btn logout" onClick={handleLogout}>
             Sign Out
           </button>
@@ -144,16 +191,35 @@ function AppTopNav({ role, page, items, onNavigate, onLogout }) {
       {/* Mobile dropdown */}
       {menuOpen && (
         <div className="app-top-nav__mobile-menu">
-          {items.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`app-top-nav__mobile-btn ${page === item.key ? 'active' : ''}`}
-              onClick={() => handleNav(item.key)}
-            >
-              {item.label}
-            </button>
-          ))}
+          {items.map((item) => {
+            if (item.children) {
+              return (
+                <React.Fragment key={item.key}>
+                  <span className="app-top-nav__mobile-section">{item.label}</span>
+                  {item.children.map((child) => (
+                    <button
+                      key={child.key}
+                      type="button"
+                      className={`app-top-nav__mobile-btn child${page === child.key ? ' active' : ''}`}
+                      onClick={() => handleNav(child.key)}
+                    >
+                      {child.label}
+                    </button>
+                  ))}
+                </React.Fragment>
+              );
+            }
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={`app-top-nav__mobile-btn${page === item.key ? ' active' : ''}`}
+                onClick={() => handleNav(item.key)}
+              >
+                {item.label}
+              </button>
+            );
+          })}
           <button
             type="button"
             className="app-top-nav__mobile-btn logout"
