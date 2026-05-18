@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../config/supabase';
 import { writeAuditLog } from '../../services/adminService';
+import { fireNotification } from '../../hooks/useNotifications';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
@@ -88,10 +89,12 @@ function AdminGuidesPage() {
 			const { data, error: err } = await supabase.from('guides').insert([form]).select().single();
 			if (err) return { error: err.message };
 			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.create', targetType: 'guide', targetId: data?.id, meta: { title: form.title } });
+			fireNotification('Content Added', `"${form.title}" has been published.`, 'info');
 		} else {
 			const { error: err } = await supabase.from('guides').update(form).eq('id', modal.guide.id);
 			if (err) return { error: err.message };
 			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.update', targetType: 'guide', targetId: modal.guide.id, meta: { title: form.title } });
+			fireNotification('Content Updated', `"${form.title}" has been updated.`, 'info');
 		}
 		await fetchGuides();
 		return {};
@@ -103,6 +106,7 @@ function AdminGuidesPage() {
 		if (err) setError(err.message);
 		else {
 			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'guide.delete', targetType: 'guide', targetId: deleteTarget.id, meta: { title: deleteTarget.title } });
+			fireNotification('Content Deleted', `"${deleteTarget.title}" has been removed.`, 'info');
 			await fetchGuides();
 		}
 		setDeleting(false);

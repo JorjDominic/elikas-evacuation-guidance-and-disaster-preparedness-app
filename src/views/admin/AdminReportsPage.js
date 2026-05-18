@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
 import { writeAuditLog } from '../../services/adminService';
+import { fireNotification } from '../../hooks/useNotifications';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 
@@ -141,6 +142,11 @@ function AdminReportsPage() {
 			targetType: 'hazard_report', targetId: id,
 			meta: { hazard_type: report?.hazard_type, location: report?.location }
 		});
+		fireNotification(
+			status === 'approved' ? 'Report Approved' : 'Report Rejected',
+			`${report?.hazard_type || 'Hazard report'}${report?.location ? ` — ${report.location}` : ''} has been ${status}.`,
+			status === 'approved' ? 'low' : 'info'
+		);
 		await fetchReports();
 	};
 

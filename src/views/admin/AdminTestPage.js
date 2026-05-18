@@ -8,6 +8,16 @@ import '../../styles/admin/AdminTestPage.css';
 
 const LEVELS = ['high', 'medium', 'low'];
 
+// Convert base64url VAPID key → Uint8Array (needed by pushManager.subscribe)
+function urlBase64ToUint8Array(base64String) {
+	const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+	const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+	const raw = atob(base64);
+	const arr = new Uint8Array(raw.length);
+	for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+	return arr;
+}
+
 const PRESET_ALERTS = {
 	high: {
 		title: '[TEST] Critical Flooding Alert',
@@ -54,6 +64,115 @@ export default function AdminTestPage() {
 		};
 		fireNotification(titles[level] || 'eLikas Test', bodies[level], level);
 		addLog('ok', `Notification dispatched (level: ${level})`);
+	};
+
+	// ── Toast Simulator ─────────────────────────────────────────────────
+	const [toastLevel, setToastLevel] = useState('info');
+	const [toastTitle, setToastTitle] = useState('eLikas Test');
+	const [toastBody, setToastBody] = useState('This is a test notification.');
+
+	const fireCustomToast = () => {
+		if (!toastTitle.trim()) { addLog('err', 'Toast title cannot be empty.'); return; }
+		fireNotification(toastTitle.trim(), toastBody.trim(), toastLevel);
+		addLog('ok', `Toast fired (level: ${toastLevel}) — visible in stack + bell icon.`);
+	};
+
+	// ── Web Push subscription ─────────────────────────────────────────────
+	const [pushSub, setPushSub] = useState(null);
+	const [pushSubLoading, setPushSubLoading] = useState(false);
+	const [edgePushLoading, setEdgePushLoading] = useState(false);
+
+	// Check existing subscription on mount
+	useEffect(() => {
+		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+		navigator.serviceWorker.ready.then((reg) => {
+			reg.pushManager.getSubscription().then((sub) => {
+				if (sub) {
+					setPushSub(sub);
+					addLog('ok', 'Existing push subscription found.');
+				}
+			});
+		});
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const subscribeToPush = async () => {
+		const vapidKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+		if (!vapidKey) {
+			addLog('err', 'REACT_APP_VAPID_PUBLIC_KEY is not set. Add it in your Vercel environment variables.');
+			return;
+		}
+		if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+			addLog('err', 'Web Push is not supported in this browser.');
+			return;
+		}
+		if (permission !== 'granted') {
+			addLog('warn', 'Grant browser notification permission first.');
+			return;
+		}
+		setPushSubLoading(true);
+		try {
+			const reg = await navigator.serviceWorker.ready;
+			const sub = await reg.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: urlBase64ToUint8Array(vapidKey),
+			});
+			const subJson = sub.toJSON();
+			const { error: dbErr } = await supabase.from('push_subscriptions').upsert(
+				[{ endpoint: subJson.endpoint, p256dh: subJson.keys.p256dh, auth: subJson.keys.auth, user_id: currentUser?.id }],
+				{ onConflict: 'endpoint' }
+			);
+			if (dbErr) {
+				addLog('err', `Subscription saved locally but DB write failed: ${dbErr.message}`);
+			} else {
+				addLog('ok', 'Push subscription registered and saved to database.');
+			}
+			setPushSub(sub);
+		} catch (err) {
+			addLog('err', `Subscribe failed: ${err.message}`);
+		}
+		setPushSubLoading(false);
+	};
+
+	const unsubscribeFromPush = async () => {
+		if (!pushSub) return;
+		setPushSubLoading(true);
+		try {
+			const endpoint = pushSub.endpoint;
+			await pushSub.unsubscribe();
+			const { error: dbErr } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+			if (dbErr) addLog('warn', `Unsubscribed from browser but DB delete failed: ${dbErr.message}`);
+			else addLog('warn', 'Push subscription removed from browser and database.');
+			setPushSub(null);
+		} catch (err) {
+			addLog('err', `Unsubscribe failed: ${err.message}`);
+		}
+		setPushSubLoading(false);
+	};
+
+	const testEdgePush = async () => {
+		if (!pushSub) { addLog('warn', 'Subscribe to push first.'); return; }
+		setEdgePushLoading(true);
+		addLog('warn', 'Invoking send-push-notification edge function…');
+		try {
+			const { data, error: fnErr } = await supabase.functions.invoke('send-push-notification', {
+				body: {
+					alert: {
+						id: `test-${Date.now()}`,
+						title: '[TEST] Edge Function Push',
+						level: 'high',
+						description: 'This is a test push fired from AdminTestPage.',
+					},
+				},
+			});
+			if (fnErr) {
+				addLog('err', `Edge function error: ${fnErr.message}`);
+			} else {
+				addLog('ok', `Edge function response: ${JSON.stringify(data)}`);
+			}
+		} catch (err) {
+			addLog('err', `Edge function threw: ${err.message}`);
+		}
+		setEdgePushLoading(false);
 	};
 
 	// ── Alert DB insert ──────────────────────────────────────────────────
@@ -200,7 +319,63 @@ export default function AdminTestPage() {
 					</div>
 				</div>
 
-				{/* ── 2. Simulate Alert (DB Insert) ── */}
+				{/* ── 1b. Toast Simulator ── */}
+				<div className="atp-section">
+					<h2 className="atp-section-title">
+						<span className="atp-icon">💬</span> Toast + Bell Simulator
+					</h2>
+					<p className="atp-section-desc">
+						Fires an in-app toast and adds an entry to the bell icon — no DB write, no OS
+						permission required. Works on every deployment including Vercel.
+					</p>
+
+					<div className="atp-level-group">
+						{['info', 'low', 'medium', 'high'].map((lvl) => (
+							<button
+								key={lvl}
+								type="button"
+								className={`atp-level-btn ${toastLevel === lvl ? `active-${lvl}` : ''}`}
+								onClick={() => setToastLevel(lvl)}
+							>
+								{lvl.toUpperCase()}
+							</button>
+						))}
+					</div>
+
+					<div className="atp-field-row">
+						<div className="atp-field">
+							<label htmlFor="atp-toast-title">Title</label>
+							<input
+								id="atp-toast-title"
+								type="text"
+								value={toastTitle}
+								onChange={(e) => setToastTitle(e.target.value)}
+								placeholder="Notification title"
+							/>
+						</div>
+						<div className="atp-field">
+							<label htmlFor="atp-toast-body">Message</label>
+							<input
+								id="atp-toast-body"
+								type="text"
+								value={toastBody}
+								onChange={(e) => setToastBody(e.target.value)}
+								placeholder="Notification body text"
+							/>
+						</div>
+					</div>
+
+					<div className="atp-actions">
+						<button className="atp-btn primary" onClick={fireCustomToast}>
+							🔔 Fire Toast + Bell
+						</button>
+						<button className="atp-btn ghost" onClick={() => { setToastTitle('eLikas Test'); setToastBody('This is a test notification.'); setToastLevel('info'); }}>
+							Reset
+						</button>
+					</div>
+				</div>
+
+				{/* ── 2. Simulate Alert (DB Insert) ── */
 				<div className="atp-section">
 					<h2 className="atp-section-title">
 						<span className="atp-icon">⚡</span> Simulate Alert (DB Insert)
@@ -286,6 +461,69 @@ export default function AdminTestPage() {
 								: 'Disconnected'}
 						</span>
 					</div>
+				</div>
+
+				{/* ── 4. Web Push Subscription ── */}
+				<div className="atp-section">
+					<h2 className="atp-section-title">
+						<span className="atp-icon">📲</span> Web Push (VAPID)
+					</h2>
+					<p className="atp-section-desc">
+						Subscribe this browser to Web Push so it receives OS-level notifications even
+						when the tab is in the background. On Vercel, set{' '}
+						<code>REACT_APP_VAPID_PUBLIC_KEY</code> in your project’s Environment Variables
+						dashboard. Subscriptions are stored in the <code>push_subscriptions</code> table
+						and delivered by the <code>send-push-notification</code> Edge Function.
+					</p>
+
+					{!process.env.REACT_APP_VAPID_PUBLIC_KEY && (
+						<div className="atp-warn-box">
+							⚠️ <code>REACT_APP_VAPID_PUBLIC_KEY</code> is not set.
+							Add it in Vercel → Project Settings → Environment Variables and redeploy.
+						</div>
+					)}
+
+					<div className="atp-realtime-row" style={{ marginBottom: '1rem' }}>
+						<span className={`atp-status-dot ${pushSub ? 'connected' : 'disconnected'}`} />
+						<span className="atp-status-label">
+							{pushSub
+								? 'Subscribed — this browser will receive push notifications'
+								: 'Not subscribed to Web Push'}
+						</span>
+					</div>
+
+					<div className="atp-actions">
+						{!pushSub ? (
+							<button
+								className="atp-btn primary"
+								onClick={subscribeToPush}
+								disabled={pushSubLoading || permission !== 'granted'}
+							>
+								{pushSubLoading ? 'Subscribing…' : '+ Subscribe This Browser'}
+							</button>
+						) : (
+							<button
+								className="atp-btn ghost"
+								onClick={unsubscribeFromPush}
+								disabled={pushSubLoading}
+							>
+								{pushSubLoading ? 'Removing…' : 'Unsubscribe'}
+							</button>
+						)}
+						<button
+							className="atp-btn warn"
+							onClick={testEdgePush}
+							disabled={!pushSub || edgePushLoading}
+						>
+							{edgePushLoading ? 'Sending…' : '⚡ Test Edge Function Push'}
+						</button>
+					</div>
+
+					{permission !== 'granted' && !pushSub && (
+						<p style={{ fontSize: '0.82rem', color: 'var(--sent-text-muted)', marginTop: '0.6rem' }}>
+							Grant browser notification permission in the section above before subscribing.
+						</p>
+					)}
 				</div>
 
 				{/* ── Console Log ── */}

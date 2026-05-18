@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
 import { reverseGeocode } from '../../services/weatherService';
 import { useAuth } from '../../context/AuthContext';
+import { fireNotification } from '../../hooks/useNotifications';
 import '../../styles/shared/sentinel.css';
 import '../../styles/user/HazardReportPage.css';
 
@@ -162,6 +163,7 @@ function HazardReportPage() {
 
 		localStorage.setItem(RATE_KEY, String(Date.now()));
 		setSuccess('Report submitted. Our team will review it shortly.');
+		fireNotification('Report Submitted', `Your ${form.hazard_type} report has been received.`, 'low');
 		setForm({ hazard_type: 'Flooding', location: '', description: '' });
 		setPin(null);
 		setPhotoFile(null);

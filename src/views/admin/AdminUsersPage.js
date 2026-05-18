@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { listProfiles, updateProfile, setUserActive, inviteUser, writeAuditLog } from '../../services/adminService';
+import { fireNotification } from '../../hooks/useNotifications';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminUsersPage.css';
@@ -82,6 +83,7 @@ function InviteModal({ onClose, onSuccess, currentUser }) {
     });
     setSaving(false);
     setSent(true);
+    fireNotification('Invite Sent', `Invitation sent to ${form.email.trim()}.`, 'info');
     onSuccess();
   };
 
@@ -245,6 +247,7 @@ function AdminUsersPage() {
       meta: updates
     });
     setUsers((prev) => prev.map((u) => u.id === id ? { ...u, ...data } : u));
+    fireNotification('User Updated', `${updates.name || 'User'} has been updated.`, 'info');
     return {};
   };
 
@@ -261,6 +264,11 @@ function AdminUsersPage() {
       meta: { name: user.name }
     });
     setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, is_active: newState } : u));
+    fireNotification(
+      newState ? 'User Activated' : 'User Deactivated',
+      `${user.name || 'User'} has been ${newState ? 'activated' : 'deactivated'}.`,
+      'info'
+    );
   };
 
   const filtered = users.filter((u) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../config/supabase';
+import { fireNotification } from '../../hooks/useNotifications';
 
 function ProfilePage() {
 	const { currentUser, setCurrentUser } = useAuth();
@@ -54,6 +55,7 @@ function ProfilePage() {
 		} else {
 			setSuccess('Profile updated successfully.');
 			setCurrentUser((prev) => ({ ...prev, name: name.trim() }));
+			fireNotification('Profile Updated', 'Your profile has been saved.', 'info');
 		}
 	};
 
@@ -73,6 +75,7 @@ function ProfilePage() {
 			setPwSuccess('Password changed successfully.');
 			setNewPassword('');
 			setConfirmPassword('');
+			fireNotification('Password Changed', 'Your password has been updated.', 'info');
 		}
 	};
 

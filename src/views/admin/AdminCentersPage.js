@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 're
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
 import { writeAuditLog } from '../../services/adminService';
+import { fireNotification } from '../../hooks/useNotifications';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
@@ -254,10 +255,12 @@ function AdminCentersPage() {
       const { data, error: err } = await supabase.from('evacuation_centers').insert([payload]).select().single();
       if (err) return { error: err.message };
       await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'center.create', targetType: 'center', targetId: data?.id, meta: { name: payload.name } });
+      fireNotification('Center Added', `"${payload.name}" has been added.`, 'info');
     } else {
       const { error: err } = await supabase.from('evacuation_centers').update(payload).eq('id', modal.center.id);
       if (err) return { error: err.message };
       await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'center.update', targetType: 'center', targetId: modal.center.id, meta: { name: payload.name } });
+      fireNotification('Center Updated', `"${payload.name}" has been updated.`, 'info');
     }
     await fetchCenters();
     return {};
@@ -269,6 +272,7 @@ function AdminCentersPage() {
     if (err) setError(err.message);
     else {
       await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'center.delete', targetType: 'center', targetId: deleteTarget.id, meta: { name: deleteTarget.name } });
+      fireNotification('Center Deleted', `"${deleteTarget.name}" has been removed.`, 'info');
       await fetchCenters();
     }
     setDeleting(false);

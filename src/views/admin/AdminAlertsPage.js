@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 're
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
 import { writeAuditLog } from '../../services/adminService';
+import { fireNotification } from '../../hooks/useNotifications';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/shared/sentinel.css';
 import '../../styles/admin/AdminCentersPage.css';
@@ -190,10 +191,12 @@ function AdminAlertsPage() {
 			const { data, error: err } = await supabase.from('alerts').insert([form]).select().single();
 			if (err) return { error: err.message };
 			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'alert.create', targetType: 'alert', targetId: data?.id, meta: { title: form.title } });
+			fireNotification('Alert Created', `"${form.title}" has been published.`, form.level || 'info');
 		} else {
 			const { error: err } = await supabase.from('alerts').update(form).eq('id', modal.alert.id);
 			if (err) return { error: err.message };
 			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'alert.update', targetType: 'alert', targetId: modal.alert.id, meta: { title: form.title } });
+			fireNotification('Alert Updated', `"${form.title}" has been updated.`, 'info');
 		}
 		await fetchAlerts();
 		return {};
@@ -205,6 +208,7 @@ function AdminAlertsPage() {
 		if (err) setError(err.message);
 		else {
 			await writeAuditLog({ actorId: currentUser?.id, actorName: currentUser?.name, action: 'alert.delete', targetType: 'alert', targetId: deleteTarget.id, meta: { title: deleteTarget.title } });
+			fireNotification('Alert Deleted', `"${deleteTarget.title}" has been removed.`, 'info');
 			await fetchAlerts();
 		}
 		setDeleting(false);
