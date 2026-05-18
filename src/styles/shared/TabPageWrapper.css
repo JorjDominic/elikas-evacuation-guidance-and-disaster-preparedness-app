@@ -45,7 +45,7 @@
 }
 
 /* Strip the top padding that .app-page normally uses to clear the fixed nav,
-   since the wrapper's padding-top + sticky bar already handle that offset. */
+   since the wrapper's padding-top already handles that offset. */
 .tabbed-page-wrapper__content .app-page {
   padding-top: 1.5rem;
 }
