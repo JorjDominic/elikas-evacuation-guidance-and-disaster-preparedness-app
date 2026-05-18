@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../../config/supabase';
@@ -311,7 +311,7 @@ function AdminAlertsPage() {
 						) : (
 							filteredAlerts.map((alert) => {
 								const sev = severityMeta[alert.level] || severityMeta.medium;
-								const highlight = alert.level === 'high';
+
 								return (
 									<div key={alert.id} className={`admin-alert-card ${alert.level}`}>
 										<div className="aac-header">

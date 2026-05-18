@@ -143,7 +143,7 @@ function AdminGuidesPage() {
 							) : (
 								guides.map((item) => {
 									const isRoute = item.type === 'Route';
-									const chipColor = isRoute ? '#f59e42' : '#2563eb';
+
 									const icon = isRoute ? '🛣️' : '📖';
 									const preview = item.content && item.content.length > 120 ? item.content.slice(0, 120) + '…' : item.content;
 									return (
