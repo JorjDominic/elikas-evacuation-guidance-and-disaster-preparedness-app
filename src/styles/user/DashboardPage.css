@@ -1,8 +1,9 @@
 .dashboard-page {
 	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+	padding: 6rem 1rem 2rem;
+	background: var(--sent-surface);
+	color: var(--sent-text);
+	font-family: 'Public Sans', sans-serif;
 }
 
 
@@ -26,7 +27,7 @@
 
 .dashboard-header p {
 	margin: 0.25rem 0 0;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .stats-grid {
@@ -36,16 +37,17 @@
 }
 
 .stat-card {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1.1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .stat-card h3 {
 	margin: 0;
 	font-size: 0.9rem;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .stat-card p {
@@ -66,10 +68,11 @@
 }
 
 .panel-card {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1.2rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .panel-card h2 {
@@ -80,7 +83,7 @@
 .panel-card ul {
 	padding-left: 1rem;
 	margin: 0;
-	color: #374151;
+	color: var(--sent-text);
 	line-height: 1.8;
 }
 
@@ -91,13 +94,14 @@
 }
 
 .quick-actions button {
-	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
+	border: 1px solid var(--sent-line);
+	background: var(--sent-surface-card);
+	color: var(--sent-primary);
 	padding: 0.65rem;
 	border-radius: 0.55rem;
 	font-weight: 600;
 	cursor: pointer;
+	transition: background 0.15s;
 }
 
 .dashboard-logout {

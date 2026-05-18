@@ -1,8 +1,9 @@
 .hazard-report-page {
 	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+	padding: 6rem 1rem 2rem;
+	background: var(--sent-surface);
+	color: var(--sent-text);
+	font-family: 'Public Sans', sans-serif;
 }
 
 .hazard-wrap {
@@ -20,10 +21,11 @@
 
 .hazard-form,
 .hazard-help {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1rem 1.1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .hazard-form {
@@ -34,16 +36,18 @@
 .hazard-form label {
 	font-size: 0.88rem;
 	font-weight: 600;
-	color: #475569;
+	color: var(--sent-text-muted);
 }
 
 .hazard-form input,
 .hazard-form select,
 .hazard-form textarea {
-	border: 1px solid #dbe3ef;
+	border: 1px solid var(--sent-line);
 	border-radius: 0.5rem;
 	padding: 0.68rem 0.78rem;
 	font-family: inherit;
+	background: var(--sent-surface-card);
+	color: var(--sent-text);
 }
 
 .hazard-form button {
@@ -65,7 +69,7 @@
 	padding-left: 1rem;
 	line-height: 1.8;
 	margin: 0;
-	color: #374151;
+	color: var(--sent-text);
 }
 
 @media (max-width: 820px) {

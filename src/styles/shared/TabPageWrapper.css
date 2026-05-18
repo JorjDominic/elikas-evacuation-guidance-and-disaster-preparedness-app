@@ -1,13 +1,13 @@
 /* ── Tabbed page wrapper — merges two pages under a sticky sub-nav ── */
 
 .tabbed-page-wrapper {
-  padding-top: 74px; /* same as fixed nav height accounted for in .app-page */
+  padding-top: 6rem;
 }
 
 /* Sticky tab bar sits immediately below the fixed .app-top-nav */
 .tabbed-page-wrapper__bar {
   position: sticky;
-  top: 74px;
+  top: 6rem;
   z-index: 9990;
   background: var(--sent-nav-bg, rgba(250, 246, 238, 0.92));
   border-bottom: 1px solid var(--sent-nav-border, rgba(26, 28, 20, 0.10));

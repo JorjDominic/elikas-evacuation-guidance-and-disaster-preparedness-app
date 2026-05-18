@@ -1,8 +1,9 @@
 .centers-page {
 	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+	padding: 6rem 1rem 2rem;
+	background: var(--sent-surface);
+	color: var(--sent-text);
+	font-family: 'Public Sans', sans-serif;
 }
 
 .centers-wrap {
@@ -18,7 +19,7 @@
 
 .page-head p {
 	margin: 0.35rem 0 0;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .centers-grid {
@@ -28,10 +29,11 @@
 }
 
 .center-card {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .center-title-row {
@@ -58,12 +60,12 @@
 .center-location,
 .center-capacity {
 	margin: 0.6rem 0;
-	color: #475569;
+	color: var(--sent-text-muted);
 }
 
 .capacity-bar {
 	height: 8px;
-	background: #e2e8f0;
+	background: var(--sent-line);
 	border-radius: 999px;
 	overflow: hidden;
 }
@@ -76,5 +78,5 @@
 .center-card small {
 	display: block;
 	margin-top: 0.5rem;
-	color: #6b7280;
+	color: var(--sent-text-muted);
 }

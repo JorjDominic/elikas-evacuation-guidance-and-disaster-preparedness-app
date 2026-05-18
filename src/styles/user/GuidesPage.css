@@ -1,8 +1,9 @@
 .guides-page {
 	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+	padding: 6rem 1rem 2rem;
+	background: var(--sent-surface);
+	color: var(--sent-text);
+	font-family: 'Public Sans', sans-serif;
 }
 
 .guides-wrap {
@@ -25,10 +26,11 @@
 
 .guide-card,
 .route-card {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .guide-card h3,
@@ -39,19 +41,20 @@
 .guide-card p,
 .route-card p {
 	margin: 0.55rem 0;
-	color: #374151;
+	color: var(--sent-text);
 }
 
 .guide-card button {
-	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
+	border: 1px solid var(--sent-line);
+	background: var(--sent-surface-card);
+	color: var(--sent-primary);
 	padding: 0.55rem 0.75rem;
 	border-radius: 0.5rem;
 	font-weight: 600;
 	cursor: pointer;
+	transition: background 0.15s;
 }
 
 .route-card small {
-	color: #64748b;
+	color: var(--sent-text-muted);
 }

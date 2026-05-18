@@ -1,17 +1,19 @@
 .admin-reports-page {
 	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+	padding: 6rem 1rem 2rem;
+	background: var(--sent-surface);
+	color: var(--sent-text);
+	font-family: 'Public Sans', sans-serif;
 }
 
 .admin-page-wrap {
 	width: min(1100px, 94%);
 	margin: 0 auto;
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1rem 1.1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .admin-head h1 {
@@ -27,23 +29,24 @@
 .admin-reports-page th,
 .admin-reports-page td {
 	padding: 0.65rem;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--sent-line);
 	text-align: left;
 }
 
 .admin-reports-page th {
 	font-size: 0.85rem;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .admin-reports-page td button {
-	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
+	border: 1px solid var(--sent-line);
+	background: var(--sent-surface-card);
+	color: var(--sent-primary);
 	padding: 0.4rem 0.65rem;
 	border-radius: 0.45rem;
 	margin-right: 0.35rem;
 	cursor: pointer;
+	transition: background 0.15s;
 }
 
 .status {

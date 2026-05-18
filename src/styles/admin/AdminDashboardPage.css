@@ -1,8 +1,9 @@
 .admin-dashboard-page {
 	min-height: 100vh;
-	padding: 2rem 1rem;
-	background: #f6f6f9;
-	font-family: 'Poppins', sans-serif;
+	padding: 6rem 1rem 2rem;
+	background: var(--sent-surface);
+	color: var(--sent-text);
+	font-family: 'Public Sans', sans-serif;
 }
 
 .admin-wrap {
@@ -25,7 +26,7 @@
 
 .admin-header p {
 	margin: 0.25rem 0 0;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .admin-stats {
@@ -35,23 +36,24 @@
 }
 
 .admin-stat-card {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1.1rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .admin-stat-card h3 {
 	margin: 0;
 	font-size: 0.9rem;
-	color: #64748b;
+	color: var(--sent-text-muted);
 }
 
 .admin-stat-card p {
 	margin: 0.3rem 0 0;
 	font-size: 1.8rem;
 	font-weight: 800;
-	color: #111827;
+	color: var(--sent-text);
 }
 
 .admin-panels {
@@ -61,10 +63,11 @@
 }
 
 .admin-panel-card {
-	background: #fff;
+	background: var(--sent-surface-card);
+	border: 1px solid var(--sent-line);
 	border-radius: 1rem;
 	padding: 1.2rem;
-	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--sent-shadow);
 }
 
 .admin-panel-card h2 {
@@ -76,7 +79,7 @@
 	margin: 0;
 	padding-left: 1rem;
 	line-height: 1.8;
-	color: #374151;
+	color: var(--sent-text);
 }
 
 .admin-actions {
@@ -86,13 +89,14 @@
 }
 
 .admin-actions button {
-	border: none;
-	background: #eef4ff;
-	color: #1d4ed8;
+	border: 1px solid var(--sent-line);
+	background: var(--sent-surface-card);
+	color: var(--sent-primary);
 	padding: 0.6rem 0.75rem;
 	border-radius: 0.5rem;
 	font-weight: 600;
 	cursor: pointer;
+	transition: background 0.15s;
 }
 
 .dashboard-logout {
