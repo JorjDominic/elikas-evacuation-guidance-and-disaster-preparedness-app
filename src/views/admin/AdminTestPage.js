@@ -375,7 +375,7 @@ export default function AdminTestPage() {
 					</div>
 				</div>
 
-				{/* ── 2. Simulate Alert (DB Insert) ── */
+				{/* ── 2. Simulate Alert (DB Insert) ── */}
 				<div className="atp-section">
 					<h2 className="atp-section-title">
 						<span className="atp-icon">⚡</span> Simulate Alert (DB Insert)
