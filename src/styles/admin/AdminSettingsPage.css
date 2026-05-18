@@ -1,0 +1,128 @@
+/* ── Admin Settings Page ─────────────────────────────────────────── */
+
+/* Row: label + controls side by side */
+.asp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--sent-line);
+}
+
+.asp-row:last-of-type { border-bottom: none; }
+
+.asp-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sent-text);
+  flex-shrink: 0;
+}
+
+.asp-row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Status message below push section */
+.asp-status-msg {
+  font-size: 0.82rem;
+  color: var(--sent-text-muted);
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--sent-surface-soft);
+  border-radius: 6px;
+  border: 1px solid var(--sent-line);
+}
+
+/* Preference toggle rows */
+.asp-pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--sent-line);
+}
+
+.asp-pref-row:last-of-type { border-bottom: none; }
+
+/* Toggle switch */
+.asp-toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--sent-line);
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.asp-toggle.on { background: var(--sent-primary); }
+
+.asp-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  display: block;
+}
+
+.asp-toggle.on .asp-toggle-knob { transform: translateX(18px); }
+
+/* Config grid */
+.asp-config-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.asp-config-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--sent-line);
+  gap: 0.75rem;
+}
+
+.asp-config-item:last-child { border-bottom: none; }
+
+.asp-config-label {
+  font-size: 0.82rem;
+  color: var(--sent-text-muted);
+  font-family: 'Public Sans', monospace;
+}
+
+.asp-config-value {
+  font-size: 0.82rem;
+  color: var(--sent-text);
+  font-family: 'Public Sans', monospace;
+}
+
+.asp-config-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.asp-config-badge.ok   { background: #dcfce7; color: #166534; }
+.asp-config-badge.err  { background: #fee2e2; color: #991b1b; }
+.asp-config-badge.warn { background: #fef3c7; color: #92400e; }
+
+:root[data-theme='dark'] .asp-config-badge.ok   { background: #052e16; color: #6ee7b7; }
+:root[data-theme='dark'] .asp-config-badge.err  { background: #450a0a; color: #fca5a5; }
+:root[data-theme='dark'] .asp-config-badge.warn { background: #451a03; color: #fcd34d; }
