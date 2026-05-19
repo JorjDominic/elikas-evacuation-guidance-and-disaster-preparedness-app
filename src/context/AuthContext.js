@@ -165,8 +165,12 @@ export function AuthProvider({ children }) {
     });
 
     return () => subscription.unsubscribe();
+  // navigate is intentionally omitted — React Router v7 backs it with an
+  // internal ref so the function always reflects the current location even
+  // without being listed as a dependency.  Listing it would cause this effect
+  // to re-run (and re-fire INITIAL_SESSION) on every URL change.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, []);
 
   const handleLogin = async (loginForm) => {
     const { error } = await supabase.auth.signInWithPassword({
