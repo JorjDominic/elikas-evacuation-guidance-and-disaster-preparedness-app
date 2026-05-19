@@ -149,8 +149,23 @@ export default function AdminTestPage() {
 		setPushSubLoading(false);
 	};
 
-	const testEdgePush = async () => {
-		if (!pushSub) { addLog('warn', 'Subscribe to push first.'); return; }
+	/**
+	 * Fires a local toast/bell/OS notification AND sends a Web Push via the
+	 * Edge Function to every subscribed device (phone, other browsers, etc.).
+	 * This is the "2-in-1" path: one press → notification on all devices.
+	 *
+	 * @param {{ level: string, title: string, description: string }} opts
+	 */
+	const sendCombinedNotif = async ({ level = 'high', title, description }) => {
+		// ── Step 1: local toast + bell + OS notification ─────────────────
+		fireNotification(title, description, level);
+		addLog('ok', `Local toast dispatched (level: ${level})`);
+
+		// ── Step 2: Web Push to all subscribers via Edge Function ────────
+		if (!pushSub) {
+			addLog('warn', 'No push subscription on this browser — subscribe first to reach other devices.');
+			return;
+		}
 		setEdgePushLoading(true);
 		addLog('warn', 'Invoking send-push-notification edge function…');
 		try {
@@ -158,22 +173,30 @@ export default function AdminTestPage() {
 				body: {
 					alert: {
 						id: `test-${Date.now()}`,
-						title: '[TEST] Edge Function Push',
-						level: 'high',
-						description: 'This is a test push fired from AdminTestPage.',
+						title,
+						level: 'high', // Edge Function only pushes on high; level still controls local toast colour
+						description,
 					},
 				},
 			});
 			if (fnErr) {
-				addLog('err', `Edge function error: ${fnErr.message}`);
+				addLog('err', `Push error: ${fnErr.message}`);
 			} else {
-				addLog('ok', `Edge function response: ${JSON.stringify(data)}`);
+				addLog('ok', `Push sent to all subscribers: ${JSON.stringify(data)}`);
 			}
 		} catch (err) {
-			addLog('err', `Edge function threw: ${err.message}`);
+			addLog('err', `Push threw: ${err.message}`);
 		}
 		setEdgePushLoading(false);
 	};
+
+	// Legacy single-device quick-test (kept for the Web Push section button)
+	const testEdgePush = () =>
+		sendCombinedNotif({
+			level: 'high',
+			title: '[TEST] Edge Function Push',
+			description: 'This is a test push fired from AdminTestPage.',
+		});
 
 	// ── Alert DB insert ──────────────────────────────────────────────────
 	const [selectedLevel, setSelectedLevel] = useState('high');
@@ -322,11 +345,12 @@ export default function AdminTestPage() {
 				{/* ── 1b. Toast Simulator ── */}
 				<div className="atp-section">
 					<h2 className="atp-section-title">
-						<span className="atp-icon">💬</span> Toast + Bell Simulator
+						<span className="atp-icon">💬</span> Toast + Push Notification Test
 					</h2>
 					<p className="atp-section-desc">
-						Fires an in-app toast and adds an entry to the bell icon — no DB write, no OS
-						permission required. Works on every deployment including Vercel.
+						<strong>Fire Toast Only</strong> — shows an in-app toast and bell entry on this device only (no DB write, no push).<br />
+						<strong>Send to All Devices</strong> — fires the local toast <em>and</em> sends a Web Push via the Edge Function to every subscribed browser/phone simultaneously.
+						Subscribe your phone and PC in the Web Push section below first.
 					</p>
 
 					<div className="atp-level-group">
@@ -367,12 +391,24 @@ export default function AdminTestPage() {
 
 					<div className="atp-actions">
 						<button className="atp-btn primary" onClick={fireCustomToast}>
-							🔔 Fire Toast + Bell
-						</button>
-						<button className="atp-btn ghost" onClick={() => { setToastTitle('eLikas Test'); setToastBody('This is a test notification.'); setToastLevel('info'); }}>
-							Reset
-						</button>
-					</div>
+						🔔 Fire Toast Only
+					</button>
+					<button
+						className="atp-btn warn"
+						disabled={edgePushLoading}
+						onClick={() => sendCombinedNotif({ level: toastLevel, title: toastTitle.trim() || 'eLikas Test', description: toastBody.trim() })}
+					>
+						{edgePushLoading ? 'Sending…' : '📲 Send to All Devices'}
+					</button>
+					<button className="atp-btn ghost" onClick={() => { setToastTitle('eLikas Test'); setToastBody('This is a test notification.'); setToastLevel('info'); }}>
+						Reset
+					</button>
+				</div>
+				{!pushSub && (
+					<p style={{ fontSize: '0.82rem', color: 'var(--sent-text-muted)', marginTop: '0.5rem' }}>
+						⚠️ <strong>Send to All Devices</strong> requires a push subscription — subscribe this browser and your phone in the Web Push section below.
+					</p>
+				)}
 				</div>
 
 				{/* ── 2. Simulate Alert (DB Insert) ── */}
